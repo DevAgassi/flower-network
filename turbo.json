@@ -22,7 +22,8 @@
         "PORT",
         "DATABASE_URL",
         "DATABASE_POOL_MAX",
-        "API_URL"
+        "API_URL",
+        "OUTBOX_RELAY"
       ]
     },
     "start": {
@@ -34,7 +35,8 @@
         "PORT",
         "DATABASE_URL",
         "DATABASE_POOL_MAX",
-        "API_URL"
+        "API_URL",
+        "OUTBOX_RELAY"
       ]
     }
   }

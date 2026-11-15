@@ -79,13 +79,13 @@ Notes:
 - `apps/api/src/database/database.module.ts` — global `DatabaseModule`; inject the instance with `@Inject(DATABASE) db: Database`.
 - Every module defines its tables in `src/<module>/<module>.schema.ts` and re-exports them from [apps/api/src/database/schema.ts](apps/api/src/database/schema.ts), which drizzle-kit reads. Modules never import each other's tables.
 
-| Command                                                        | What it does                                                        |
-| -------------------------------------------------------------- | ------------------------------------------------------------------- |
-| `pnpm db:migrate`                                              | Applies pending migrations (tracked in table `drizzle.migrations`)  |
-| `pnpm db:studio`                                               | Opens Drizzle Studio to browse data                                 |
-| `pnpm --filter @flower/api db:generate`                        | Generates a migration from schema changes                           |
-| `pnpm --filter @flower/api db:generate --custom --name=<name>` | Creates an empty migration for hand-written SQL (extensions, views) |
-| `pnpm --filter @flower/api db:check`                           | Checks migration files for consistency                              |
+| Command                                                        | What it does                                                                          |
+| -------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `pnpm db:migrate`                                              | Applies pending Drizzle migrations (table `drizzle.migrations`) and the outbox schema |
+| `pnpm db:studio`                                               | Opens Drizzle Studio to browse data                                                   |
+| `pnpm --filter @flower/api db:generate`                        | Generates a migration from schema changes                                             |
+| `pnpm --filter @flower/api db:generate --custom --name=<name>` | Creates an empty migration for hand-written SQL (extensions, views)                   |
+| `pnpm --filter @flower/api db:check`                           | Checks migration files for consistency                                                |
 
 Workflow: change a `*.schema.ts` → `db:generate` → review the generated SQL → `db:migrate` → commit the schema and the migration together. Never edit a migration that is already on `main`; add a new one. Migrations run as a separate step (`db:migrate`), not on application start, so several API instances never race to migrate.
 
@@ -115,6 +115,51 @@ Build only what changed compared to the default branch (used by CI to deploy app
 ```bash
 pnpm turbo run build --affected
 ```
+
+## Events between modules (outbox)
+
+Modules never call each other to react to a change; they publish an event through the transactional outbox ([`@nestjs/outbox`](https://docs.nestjs.com/reliability/outbox), ADR-12 in [init.md](init.md)). The event is saved **in the same transaction** as the business change, so it is delivered if and only if the change committed — even if the process crashes right after the commit.
+
+Produce an event — always inside the transaction of the change:
+
+```ts
+import { DATABASE, type Database } from '../database/database.module.js';
+import type { AppOutbox } from '../outbox/outbox.module.js';
+
+constructor(@Inject(DATABASE) private readonly db: Database, private readonly outbox: AppOutbox) {}
+
+await this.db.transaction(async (tx) => {
+  await tx.update(orders).set({ state: 'completed' }).where(eq(orders.id, id));
+  await this.outbox.add(tx, { topic: 'order.completed', key: id, payload: { orderId: id } });
+});
+this.outbox.notify(); // optional: publish now instead of at the next poll (1 s)
+```
+
+Handle it — in any module, as a provider method:
+
+```ts
+@OnOutboxMessage('order.completed', { consumer: 'analytics-revenue' }) // stable consumer name
+async addRevenue(payload: { orderId: string }, ctx: OutboxHandlerContext<Transaction>) {
+  await this.db.transaction((tx) =>
+    // inbox record and the write commit together: processed exactly once
+    ctx.processInTransaction(tx, async () => { /* update rollup table through tx */ }),
+  );
+}
+```
+
+- `add()` without a transaction throws `OutboxTransactionRequiredError`.
+- Delivery is at least once; the consumer's inbox drops duplicates. A failing handler is retried with backoff, then the message goes to the dead-letter table.
+- `key`: messages with the same key are delivered in commit order (e.g. all events of one order).
+- Tables live in the PostgreSQL schema `nest_outbox` (`messages`, `inbox`, `dead_letters`); inbox records older than 30 days are deleted daily.
+
+**Processes.** In development the API also runs the relay — nothing extra to start. In production API instances run with `OUTBOX_RELAY=off` and one or more workers publish:
+
+| Command                                  | What it does                                                                  |
+| ---------------------------------------- | ----------------------------------------------------------------------------- |
+| `pnpm --filter @flower/api dev:worker`   | Worker in watch mode (only needed to test the production setup locally)       |
+| `pnpm --filter @flower/api start:worker` | Built worker, `NODE_ENV=production`; refuses to start with `OUTBOX_RELAY=off` |
+
+`pnpm db:migrate` applies both the Drizzle migrations and the outbox schema. In production the app refuses to start while the outbox schema is behind.
 
 ## Development and production modes
 
@@ -152,14 +197,15 @@ $env:DATABASE_URL="postgres://flower:flower@localhost:5433/flower"; $env:API_URL
 
 ## Environment variables
 
-| Variable            | App                | Default (outside production)                     | Production                    | Purpose                                                 |
-| ------------------- | ------------------ | ------------------------------------------------ | ----------------------------- | ------------------------------------------------------- |
-| `NODE_ENV`          | api, web           | `development`                                    | `production` (set by `start`) | Mode, see above                                         |
-| `PORT`              | api                | `3001`                                           | optional                      | HTTP port of the API                                    |
-| `DATABASE_URL`      | api                | `postgres://flower:flower@localhost:5433/flower` | **required**                  | PostgreSQL connection string (also used by drizzle-kit) |
-| `DATABASE_POOL_MAX` | api                | `10`                                             | optional (1–100)              | Maximum connections in the pool                         |
-| `API_URL`           | web                | `http://localhost:3001`                          | **required**                  | API base URL used by server functions                   |
-| `PORT`              | web (built server) | `3000`                                           | optional                      | HTTP port of the built web server                       |
+| Variable            | App                | Default (outside production)                     | Production                    | Purpose                                                                                  |
+| ------------------- | ------------------ | ------------------------------------------------ | ----------------------------- | ---------------------------------------------------------------------------------------- |
+| `NODE_ENV`          | api, web           | `development`                                    | `production` (set by `start`) | Mode, see above                                                                          |
+| `PORT`              | api                | `3001`                                           | optional                      | HTTP port of the API                                                                     |
+| `DATABASE_URL`      | api                | `postgres://flower:flower@localhost:5433/flower` | **required**                  | PostgreSQL connection string (also used by drizzle-kit)                                  |
+| `DATABASE_POOL_MAX` | api                | `10`                                             | optional (1–100)              | Maximum connections in the pool                                                          |
+| `OUTBOX_RELAY`      | api                | `on`                                             | `off` on API-only instances   | `on`: this process publishes outbox messages; `off`: only adds them (a worker publishes) |
+| `API_URL`           | web                | `http://localhost:3001`                          | **required**                  | API base URL used by server functions                                                    |
+| `PORT`              | web (built server) | `3000`                                           | optional                      | HTTP port of the built web server                                                        |
 
 To add a variable: declare it in the app's schema, add it to `turbo.json` → `passThroughEnv`, document it here and, if it has a local default, in `.env.example`.
 

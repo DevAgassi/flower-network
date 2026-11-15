@@ -24,6 +24,9 @@ export const envSchema = z
     DATABASE_POOL_MAX: optional(
       z.coerce.number().int().min(1).max(100),
     ).transform((v) => v ?? 10),
+    // 'off' on API-only instances when separate worker processes publish
+    // outbox messages; the worker itself refuses to start with 'off'.
+    OUTBOX_RELAY: optional(z.enum(['on', 'off'])).transform((v) => v ?? 'on'),
   })
   .superRefine((env, ctx) => {
     if (env.NODE_ENV === 'production' && !env.DATABASE_URL) {
