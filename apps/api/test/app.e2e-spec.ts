@@ -4,6 +4,7 @@ import request from 'supertest';
 import { App } from 'supertest/types.js';
 import { AppModule } from './../src/app.module.js';
 
+// Uses the real database: run `pnpm infra:up` first.
 describe('Health (e2e)', () => {
   let app: INestApplication<App>;
 
@@ -21,7 +22,11 @@ describe('Health (e2e)', () => {
       .get('/health')
       .expect(200);
 
-    expect(response.body).toMatchObject({ status: 'ok', service: 'api' });
+    expect(response.body).toMatchObject({
+      status: 'ok',
+      service: 'api',
+      checks: { database: 'up' },
+    });
   });
 
   afterEach(async () => {

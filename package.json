@@ -17,6 +17,8 @@
     "infra:up": "docker compose up -d --wait",
     "infra:down": "docker compose down",
     "infra:logs": "docker compose logs -f",
+    "db:migrate": "pnpm --filter @flower/api db:migrate",
+    "db:studio": "pnpm --filter @flower/api db:studio",
     "github:sync": "gh roadmap sync"
   },
   "devDependencies": {
