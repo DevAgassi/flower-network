@@ -20,11 +20,17 @@ import path from 'node:path';
 
 const [repoArg, projectTitle = 'Flower Network'] = process.argv.slice(2);
 if (!repoArg || !repoArg.includes('/')) {
-  console.error('Usage: node scripts/github/seed-issues.mjs <owner>/<repo> [project title]');
+  console.error(
+    'Usage: node scripts/github/seed-issues.mjs <owner>/<repo> [project title]',
+  );
   process.exit(1);
 }
 const [OWNER, REPO] = repoArg.split('/');
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
+const ROOT = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  '..',
+  '..',
+);
 const ROADMAP_PATH = path.join(ROOT, 'ROADMAP.md');
 
 /** Delay between write requests to stay under GitHub secondary rate limits. */
@@ -54,7 +60,8 @@ const MODULES = {
 // gh helpers
 // ---------------------------------------------------------------------------
 
-const sleep = (ms) => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+const sleep = (ms) =>
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
 
 /** Calls `gh api`. `body` is sent as JSON on stdin. Returns parsed JSON (or null). */
 function api(method, endpoint, body, { paginate = false } = {}) {
@@ -92,12 +99,15 @@ function parseRoadmap(md) {
   }
 
   const epics = [];
-  for (const m of md.matchAll(/^\s*(E_([A-Z]{3})_S(\d))\["[A-Z]{3} · (.+?)"\]/gm)) {
+  for (const m of md.matchAll(
+    /^\s*(E_([A-Z]{3})_S(\d))\["[A-Z]{3} · (.+?)"\]/gm,
+  )) {
     epics.push({ id: m[1], module: m[2], stage: m[3], title: m[4] });
   }
 
   const features = [];
-  const rowRe = /^\| ([A-Z]{3}-\d{2}) \| (E_[A-Z]{3}_S\d) \| (.+?) \| (.+?) \| (\w+) \| .*\|$/gm;
+  const rowRe =
+    /^\| ([A-Z]{3}-\d{2}) \| (E_[A-Z]{3}_S\d) \| (.+?) \| (.+?) \| (\w+) \| .*\|$/gm;
   for (const m of md.matchAll(rowRe)) {
     features.push({
       id: m[1],
@@ -135,10 +145,12 @@ function topoSort(features) {
   const state = new Map();
   const visit = (f) => {
     if (state.get(f.id) === 'done') return;
-    if (state.get(f.id) === 'visiting') throw new Error(`Dependency cycle at ${f.id}`);
+    if (state.get(f.id) === 'visiting')
+      throw new Error(`Dependency cycle at ${f.id}`);
     state.set(f.id, 'visiting');
     for (const d of f.deps) {
-      if (!byId.has(d)) throw new Error(`${f.id} depends on unknown feature ${d}`);
+      if (!byId.has(d))
+        throw new Error(`${f.id} depends on unknown feature ${d}`);
       visit(byId.get(d));
     }
     state.set(f.id, 'done');
@@ -154,8 +166,16 @@ function topoSort(features) {
 
 function ensureLabels() {
   const labels = [
-    { name: 'type:epic', color: '1f2937', description: 'Epic: module scope within one stage' },
-    { name: 'type:feature', color: 'd1d5db', description: 'Feature from the ROADMAP registry' },
+    {
+      name: 'type:epic',
+      color: '1f2937',
+      description: 'Epic: module scope within one stage',
+    },
+    {
+      name: 'type:feature',
+      color: 'd1d5db',
+      description: 'Feature from the ROADMAP registry',
+    },
     ...Object.entries(MODULES).map(([code, m]) => ({
       name: `module:${m.name}`,
       color: m.color,
@@ -163,7 +183,9 @@ function ensureLabels() {
     })),
   ];
   const existing = new Set(
-    api('GET', `repos/${OWNER}/${REPO}/labels?per_page=100`, undefined, { paginate: true })
+    api('GET', `repos/${OWNER}/${REPO}/labels?per_page=100`, undefined, {
+      paginate: true,
+    })
       .flat()
       .map((l) => l.name),
   );
@@ -175,15 +197,23 @@ function ensureLabels() {
 }
 
 function ensureMilestones(stages) {
-  const existing = api('GET', `repos/${OWNER}/${REPO}/milestones?state=all&per_page=100`, undefined, {
-    paginate: true,
-  }).flat();
+  const existing = api(
+    'GET',
+    `repos/${OWNER}/${REPO}/milestones?state=all&per_page=100`,
+    undefined,
+    {
+      paginate: true,
+    },
+  ).flat();
   const numbers = {};
   for (const [n, name] of Object.entries(stages)) {
     const title = `Stage ${n}`;
     let ms = existing.find((m) => m.title === title);
     if (!ms) {
-      ms = api('POST', `repos/${OWNER}/${REPO}/milestones`, { title, description: name });
+      ms = api('POST', `repos/${OWNER}/${REPO}/milestones`, {
+        title,
+        description: name,
+      });
       console.log(`mstone  + ${title}`);
     }
     numbers[n] = ms.number;
@@ -192,9 +222,14 @@ function ensureMilestones(stages) {
 }
 
 function loadExistingIssues() {
-  const all = api('GET', `repos/${OWNER}/${REPO}/issues?state=all&per_page=100`, undefined, {
-    paginate: true,
-  })
+  const all = api(
+    'GET',
+    `repos/${OWNER}/${REPO}/issues?state=all&per_page=100`,
+    undefined,
+    {
+      paginate: true,
+    },
+  )
     .flat()
     .filter((i) => !i.pull_request);
   const byKey = new Map();
@@ -212,7 +247,11 @@ function issueRef(issue) {
 /** Keeps the GitHub title in sync with ROADMAP.md (ROADMAP is the source of truth). */
 function syncTitle(issue, title) {
   if (issue.title === title) return issue;
-  const updated = api('PATCH', `repos/${OWNER}/${REPO}/issues/${issue.number}`, { title });
+  const updated = api(
+    'PATCH',
+    `repos/${OWNER}/${REPO}/issues/${issue.number}`,
+    { title },
+  );
   console.log(`title   ~ #${issue.number}: ${title}`);
   return updated;
 }
@@ -278,7 +317,11 @@ function createFeatures(features, stages, milestones, epicIssues, existing) {
 /** Returns ids of issues listed by a GET endpoint (sub-issues, blocked-by). */
 function listIssueIds(endpoint) {
   try {
-    return new Set(api('GET', `${endpoint}?per_page=100`, undefined, { paginate: true }).flat().map((i) => i.id));
+    return new Set(
+      api('GET', `${endpoint}?per_page=100`, undefined, { paginate: true })
+        .flat()
+        .map((i) => i.id),
+    );
   } catch {
     return new Set();
   }
@@ -290,15 +333,21 @@ function linkSubIssues(features, epicIssues, featureIssues) {
     const epic = epicIssues.get(f.epic);
     const child = featureIssues.get(f.id);
     if (!linked.has(epic.number)) {
-      linked.set(epic.number, listIssueIds(`repos/${OWNER}/${REPO}/issues/${epic.number}/sub_issues`));
+      linked.set(
+        epic.number,
+        listIssueIds(`repos/${OWNER}/${REPO}/issues/${epic.number}/sub_issues`),
+      );
     }
     if (linked.get(epic.number).has(child.id)) continue;
     try {
-      api('POST', `repos/${OWNER}/${REPO}/issues/${epic.number}/sub_issues`, { sub_issue_id: child.id });
+      api('POST', `repos/${OWNER}/${REPO}/issues/${epic.number}/sub_issues`, {
+        sub_issue_id: child.id,
+      });
       console.log(`sub     + ${f.epic} <- ${f.id}`);
     } catch (err) {
       const text = errorText(err);
-      if (!/already|duplicate|422/i.test(text)) console.warn(`sub     ! ${f.id}: ${text.trim()}`);
+      if (!/already|duplicate|422/i.test(text))
+        console.warn(`sub     ! ${f.id}: ${text.trim()}`);
     }
   }
 }
@@ -307,21 +356,30 @@ function linkDependencies(features, featureIssues) {
   for (const f of features) {
     const issue = featureIssues.get(f.id);
     if (!f.deps.length) continue;
-    const existingDeps = listIssueIds(`repos/${OWNER}/${REPO}/issues/${issue.number}/dependencies/blocked_by`);
+    const existingDeps = listIssueIds(
+      `repos/${OWNER}/${REPO}/issues/${issue.number}/dependencies/blocked_by`,
+    );
     for (const d of f.deps) {
       if (existingDeps.has(featureIssues.get(d).id)) continue;
       try {
-        api('POST', `repos/${OWNER}/${REPO}/issues/${issue.number}/dependencies/blocked_by`, {
-          issue_id: featureIssues.get(d).id,
-        });
+        api(
+          'POST',
+          `repos/${OWNER}/${REPO}/issues/${issue.number}/dependencies/blocked_by`,
+          {
+            issue_id: featureIssues.get(d).id,
+          },
+        );
         console.log(`dep     + ${f.id} blocked by ${d}`);
       } catch (err) {
         const text = errorText(err);
         if (/404|Not Found/i.test(text)) {
-          console.warn('dep     ! issue dependencies API unavailable, skipping (deps stay in issue bodies)');
+          console.warn(
+            'dep     ! issue dependencies API unavailable, skipping (deps stay in issue bodies)',
+          );
           return;
         }
-        if (!/already|422/i.test(text)) console.warn(`dep     ! ${f.id} <- ${d}: ${text.trim()}`);
+        if (!/already|422/i.test(text))
+          console.warn(`dep     ! ${f.id} <- ${d}: ${text.trim()}`);
       }
     }
   }
@@ -330,18 +388,41 @@ function linkDependencies(features, featureIssues) {
 function ensureProject(allIssues) {
   const repoNodeId = api('GET', `repos/${OWNER}/${REPO}`).node_id;
   const { user } = graphql(
-    `query($login: String!) { user(login: $login) { id projectsV2(first: 100) { nodes { id number title url } } } }`,
+    `
+      query ($login: String!) {
+        user(login: $login) {
+          id
+          projectsV2(first: 100) {
+            nodes {
+              id
+              number
+              title
+              url
+            }
+          }
+        }
+      }
+    `,
     { login: OWNER },
   );
 
   let project = user.projectsV2.nodes.find((p) => p.title === projectTitle);
   if (!project) {
     project = graphql(
-      `mutation($owner: ID!, $title: String!, $repo: ID!) {
-         createProjectV2(input: { ownerId: $owner, title: $title, repositoryId: $repo }) {
-           projectV2 { id number title url }
-         }
-       }`,
+      `
+        mutation ($owner: ID!, $title: String!, $repo: ID!) {
+          createProjectV2(
+            input: { ownerId: $owner, title: $title, repositoryId: $repo }
+          ) {
+            projectV2 {
+              id
+              number
+              title
+              url
+            }
+          }
+        }
+      `,
       { owner: user.id, title: projectTitle, repo: repoNodeId },
     ).createProjectV2.projectV2;
     console.log(`project + ${project.url}`);
@@ -350,7 +431,9 @@ function ensureProject(allIssues) {
   const fieldsQuery = `query($id: ID!) { node(id: $id) { ... on ProjectV2 { fields(first: 50) { nodes {
       ... on ProjectV2SingleSelectField { id name options { id name color description } } } } } } }`;
   const loadFields = () =>
-    graphql(fieldsQuery, { id: project.id }).node.fields.nodes.filter((n) => n && n.name);
+    graphql(fieldsQuery, { id: project.id }).node.fields.nodes.filter(
+      (n) => n && n.name,
+    );
 
   const wanted = {
     Module: Object.values(MODULES).map((m) => m.name),
@@ -360,20 +443,42 @@ function ensureProject(allIssues) {
   for (const [name, options] of Object.entries(wanted)) {
     const current = fields.find((f) => f.name === name);
     if (current) {
-      const missing = options.filter((o) => !current.options.some((x) => x.name === o));
+      const missing = options.filter(
+        (o) => !current.options.some((x) => x.name === o),
+      );
       if (!missing.length) continue;
       // Existing options are passed back with their ids so values already set on items are preserved.
       graphql(
-        `mutation($field: ID!, $options: [ProjectV2SingleSelectFieldOptionInput!]!) {
-           updateProjectV2Field(input: { fieldId: $field, singleSelectOptions: $options }) {
-             projectV2Field { ... on ProjectV2SingleSelectField { id } }
-           }
-         }`,
+        `
+          mutation (
+            $field: ID!
+            $options: [ProjectV2SingleSelectFieldOptionInput!]!
+          ) {
+            updateProjectV2Field(
+              input: { fieldId: $field, singleSelectOptions: $options }
+            ) {
+              projectV2Field {
+                ... on ProjectV2SingleSelectField {
+                  id
+                }
+              }
+            }
+          }
+        `,
         {
           field: current.id,
           options: [
-            ...current.options.map(({ id, name: n, color, description }) => ({ id, name: n, color, description })),
-            ...missing.map((o) => ({ name: o, color: 'GRAY', description: '' })),
+            ...current.options.map(({ id, name: n, color, description }) => ({
+              id,
+              name: n,
+              color,
+              description,
+            })),
+            ...missing.map((o) => ({
+              name: o,
+              color: 'GRAY',
+              description: '',
+            })),
           ],
         },
       );
@@ -381,15 +486,36 @@ function ensureProject(allIssues) {
       continue;
     }
     graphql(
-      `mutation($project: ID!, $name: String!, $options: [ProjectV2SingleSelectFieldOptionInput!]!) {
-         createProjectV2Field(input: { projectId: $project, dataType: SINGLE_SELECT, name: $name, singleSelectOptions: $options }) {
-           projectV2Field { ... on ProjectV2SingleSelectField { id } }
-         }
-       }`,
+      `
+        mutation (
+          $project: ID!
+          $name: String!
+          $options: [ProjectV2SingleSelectFieldOptionInput!]!
+        ) {
+          createProjectV2Field(
+            input: {
+              projectId: $project
+              dataType: SINGLE_SELECT
+              name: $name
+              singleSelectOptions: $options
+            }
+          ) {
+            projectV2Field {
+              ... on ProjectV2SingleSelectField {
+                id
+              }
+            }
+          }
+        }
+      `,
       {
         project: project.id,
         name,
-        options: options.map((o) => ({ name: o, color: 'GRAY', description: '' })),
+        options: options.map((o) => ({
+          name: o,
+          color: 'GRAY',
+          description: '',
+        })),
       },
     );
     console.log(`field   + ${name}`);
@@ -403,7 +529,10 @@ function ensureProject(allIssues) {
   };
   const option = (fieldName, optionName) => {
     const o = field(fieldName).options.find((x) => x.name === optionName);
-    if (!o) throw new Error(`Option "${optionName}" not found in field "${fieldName}"`);
+    if (!o)
+      throw new Error(
+        `Option "${optionName}" not found in field "${fieldName}"`,
+      );
     return o.id;
   };
 
@@ -439,10 +568,26 @@ function ensureProject(allIssues) {
 
   const setField = (itemId, fieldName, optionName) =>
     graphql(
-      `mutation($p: ID!, $i: ID!, $f: ID!, $o: String!) {
-         updateProjectV2ItemFieldValue(input: { projectId: $p, itemId: $i, fieldId: $f, value: { singleSelectOptionId: $o } }) { clientMutationId }
-       }`,
-      { p: project.id, i: itemId, f: field(fieldName).id, o: option(fieldName, optionName) },
+      `
+        mutation ($p: ID!, $i: ID!, $f: ID!, $o: String!) {
+          updateProjectV2ItemFieldValue(
+            input: {
+              projectId: $p
+              itemId: $i
+              fieldId: $f
+              value: { singleSelectOptionId: $o }
+            }
+          ) {
+            clientMutationId
+          }
+        }
+      `,
+      {
+        p: project.id,
+        i: itemId,
+        f: field(fieldName).id,
+        o: option(fieldName, optionName),
+      },
     );
 
   for (const { issue, module, type } of allIssues) {
@@ -450,14 +595,26 @@ function ensureProject(allIssues) {
     const isNew = !item;
     if (isNew) {
       const id = graphql(
-        `mutation($project: ID!, $content: ID!) {
-           addProjectV2ItemById(input: { projectId: $project, contentId: $content }) { item { id } }
-         }`,
+        `
+          mutation ($project: ID!, $content: ID!) {
+            addProjectV2ItemById(
+              input: { projectId: $project, contentId: $content }
+            ) {
+              item {
+                id
+              }
+            }
+          }
+        `,
         { project: project.id, content: issue.node_id },
       ).addProjectV2ItemById.item.id;
       item = { id };
     }
-    const desired = { Status: 'Todo', Module: MODULES[module].name, Level: type };
+    const desired = {
+      Status: 'Todo',
+      Module: MODULES[module].name,
+      Level: type,
+    };
     const filled = [];
     for (const [fieldName, optionName] of Object.entries(desired)) {
       if (item[fieldName]) continue;
@@ -465,7 +622,8 @@ function ensureProject(allIssues) {
       filled.push(fieldName);
     }
     if (isNew) console.log(`item    + #${issue.number}`);
-    else if (filled.length) console.log(`item    ~ #${issue.number}: ${filled.join(', ')}`);
+    else if (filled.length)
+      console.log(`item    ~ #${issue.number}: ${filled.join(', ')}`);
   }
   return project;
 }
@@ -484,7 +642,10 @@ function writeBackLinks(md, epics, epicIssues, featureIssues) {
       return `| ${e.id} | ${e.title} | [#${i.number}](${i.html_url}) |`;
     }),
   ].join('\n');
-  out = out.replace(/(<!-- epics:start -->)[\s\S]*?(<!-- epics:end -->)/, `$1\n${table}\n$2`);
+  out = out.replace(
+    /(<!-- epics:start -->)[\s\S]*?(<!-- epics:end -->)/,
+    `$1\n${table}\n$2`,
+  );
   return out;
 }
 
@@ -492,16 +653,22 @@ function writeBackLinks(md, epics, epicIssues, featureIssues) {
 
 const md = readFileSync(ROADMAP_PATH, 'utf8');
 const { stages, epics, features } = parseRoadmap(md);
-console.log(`parsed: ${Object.keys(stages).length} stages, ${epics.length} epics, ${features.length} features`);
+console.log(
+  `parsed: ${Object.keys(stages).length} stages, ${epics.length} epics, ${features.length} features`,
+);
 
 const epicIds = new Set(epics.map((e) => e.id));
 for (const f of features) {
-  if (!epicIds.has(f.epic)) throw new Error(`${f.id} references unknown epic ${f.epic}`);
-  if (!MODULES[f.module]) throw new Error(`${f.id} has unknown module ${f.module}`);
+  if (!epicIds.has(f.epic))
+    throw new Error(`${f.id} references unknown epic ${f.epic}`);
+  if (!MODULES[f.module])
+    throw new Error(`${f.id} has unknown module ${f.module}`);
 }
 topoSort(features);
 if (process.env.DRY_RUN) {
-  console.log('DRY_RUN set: parsing and validation passed, nothing was written');
+  console.log(
+    'DRY_RUN set: parsing and validation passed, nothing was written',
+  );
   process.exit(0);
 }
 
@@ -509,15 +676,32 @@ ensureLabels();
 const milestones = ensureMilestones(stages);
 const existing = loadExistingIssues();
 const epicIssues = createEpics(epics, stages, milestones, existing);
-const featureIssues = createFeatures(features, stages, milestones, epicIssues, existing);
+const featureIssues = createFeatures(
+  features,
+  stages,
+  milestones,
+  epicIssues,
+  existing,
+);
 linkSubIssues(features, epicIssues, featureIssues);
 linkDependencies(features, featureIssues);
 
-writeFileSync(ROADMAP_PATH, writeBackLinks(md, epics, epicIssues, featureIssues));
+writeFileSync(
+  ROADMAP_PATH,
+  writeBackLinks(md, epics, epicIssues, featureIssues),
+);
 console.log('ROADMAP.md updated with issue links');
 
 const project = ensureProject([
-  ...epics.map((e) => ({ issue: epicIssues.get(e.id), module: e.module, type: 'Epic' })),
-  ...features.map((f) => ({ issue: featureIssues.get(f.id), module: f.module, type: 'Feature' })),
+  ...epics.map((e) => ({
+    issue: epicIssues.get(e.id),
+    module: e.module,
+    type: 'Epic',
+  })),
+  ...features.map((f) => ({
+    issue: featureIssues.get(f.id),
+    module: f.module,
+    type: 'Feature',
+  })),
 ]);
 console.log(`done: ${project.url}`);
