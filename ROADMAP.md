@@ -166,7 +166,7 @@ The `Issue` column is filled in once the issue is created.
 | ID | Epic | Feature | Depends on | Status | Issue |
 |---|---|---|---|---|---|
 | PLT-01 | E_PLT_S1 | `docker-compose`: PostgreSQL 17, Redis, MinIO, Prometheus, Grafana | — | todo | [#23](https://github.com/DevAgassi/flower-network/issues/23) |
-| PLT-02 | E_PLT_S1 | Monorepo: NestJS app, TanStack Start app, shared types package | — | todo | [#24](https://github.com/DevAgassi/flower-network/issues/24) |
+| PLT-02 | E_PLT_S1 | Monorepo: NestJS app, TanStack Start app, shared types package | — | done | [#24](https://github.com/DevAgassi/flower-network/issues/24) |
 | PLT-03 | E_PLT_S1 | ADR-1: choose ORM; migrations pipeline | PLT-02 | todo | [#25](https://github.com/DevAgassi/flower-network/issues/25) |
 | PLT-04 | E_PLT_S1 | Transactional Outbox, relay worker (BullMQ), `processed_events` | PLT-03 | todo | [#26](https://github.com/DevAgassi/flower-network/issues/26) |
 | PLT-05 | E_PLT_S1 | Structured logging (`pino`), OpenTelemetry tracing, metrics endpoint | PLT-02 | todo | [#27](https://github.com/DevAgassi/flower-network/issues/27) |

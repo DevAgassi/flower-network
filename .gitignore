@@ -1,8 +1,26 @@
+# Dependencies
 node_modules/
+
+# Build output
 dist/
+dist-ssr/
+.output/
+.nitro/
+.tanstack/
+.vinxi/
+*.tsbuildinfo
+
+# Tooling caches
+.turbo/
+coverage/
+
+# Environment
 .env
 .env.*
 !.env.example
+*.local
+
+# Logs and OS files
 *.log
 .DS_Store
 Thumbs.db

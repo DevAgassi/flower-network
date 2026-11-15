@@ -1,0 +1,11 @@
+{
+  "extends": "@flower/typescript-config/vite-react.json",
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules", ".output", ".nitro", ".tanstack"],
+  "compilerOptions": {
+    "types": ["vite/client", "node"],
+    "paths": {
+      "#/*": ["./src/*"]
+    }
+  }
+}

@@ -1,0 +1,12 @@
+pnpm-lock.yaml
+dist
+.output
+.turbo
+.nitro
+.tanstack
+coverage
+apps/web/src/routeTree.gen.ts
+
+# Parsed by scripts/github/seed-issues.mjs; table alignment would break parsing
+ROADMAP.md
+init.md
