@@ -23,7 +23,10 @@
         "DATABASE_URL",
         "DATABASE_POOL_MAX",
         "API_URL",
-        "OUTBOX_RELAY"
+        "OUTBOX_RELAY",
+        "LOG_LEVEL",
+        "OTEL_EXPORTER_OTLP_ENDPOINT",
+        "METRICS_PORT"
       ]
     },
     "start": {
@@ -36,7 +39,10 @@
         "DATABASE_URL",
         "DATABASE_POOL_MAX",
         "API_URL",
-        "OUTBOX_RELAY"
+        "OUTBOX_RELAY",
+        "LOG_LEVEL",
+        "OTEL_EXPORTER_OTLP_ENDPOINT",
+        "METRICS_PORT"
       ]
     }
   }

@@ -9,10 +9,12 @@ audience: [developer]
 
 One NestJS 12 application with two entry points over the same modules ([`AppModule`](../../apps/api/src/app.module.ts)):
 
-| Process | Entry point                                     | What it runs                                        | Development                            | Production                            |
-| ------- | ----------------------------------------------- | --------------------------------------------------- | -------------------------------------- | ------------------------------------- |
-| API     | [`src/main.ts`](../../apps/api/src/main.ts)     | HTTP server on `PORT` (3001)                        | `pnpm dev`; also runs the outbox relay | `start`, with `OUTBOX_RELAY=off`      |
-| Worker  | [`src/worker.ts`](../../apps/api/src/worker.ts) | Outbox relay, its handlers, scheduled jobs; no HTTP | not needed (`dev:worker` to test it)   | `start:worker`, one or more instances |
+| Process | Entry point                                     | What it runs                                                                         | Development                            | Production                            |
+| ------- | ----------------------------------------------- | ------------------------------------------------------------------------------------ | -------------------------------------- | ------------------------------------- |
+| API     | [`src/main.ts`](../../apps/api/src/main.ts)     | HTTP server on `PORT` (3001), including `/metrics`                                   | `pnpm dev`; also runs the outbox relay | `start`, with `OUTBOX_RELAY=off`      |
+| Worker  | [`src/worker.ts`](../../apps/api/src/worker.ts) | Outbox relay, its handlers, scheduled jobs; only `/metrics` on `METRICS_PORT` (9464) | not needed (`dev:worker` to test it)   | `start:worker`, one or more instances |
+
+Each entry point first calls `startTracing()` and then imports the process code from `src/processes/` dynamically, so OpenTelemetry can patch libraries as they load ([Observability](../modules/platform/observability.md)).
 
 The worker refuses to start with `OUTBOX_RELAY=off` — it would do nothing. A separate package for the worker is created only when it gets code the API does not have (ADR-10).
 
@@ -29,14 +31,16 @@ flowchart LR
 
 ```
 src/
-  main.ts                 HTTP entry point
-  worker.ts               worker entry point
+  main.ts                 HTTP entry point: starts tracing, then imports processes/api.ts
+  worker.ts               worker entry point: starts tracing, then imports processes/worker.ts
+  processes/              what each process does once started
   bootstrap.ts            startup log levels, runOrExit()
   migrate-outbox.ts       outbox schema migration (part of db:migrate)
   app.module.ts           root module: config, database, schedule, outbox, health, business modules
   config/                 environment schema and AppConfigModule
   database/               DatabaseModule, schema registry
   outbox/                 AppOutboxModule, inbox retention
+  observability/          tracing (OpenTelemetry), logging (pino), metrics (Prometheus)
   health/                 GET /health
   <module>/               business modules (from Stage 2)
 test/                     e2e tests against the real database
@@ -64,7 +68,8 @@ drizzle/                  SQL migrations
 ## Startup and shutdown
 
 - Configuration is validated before anything else starts ([Configuration](../modules/platform/configuration.md)).
-- `enableShutdownHooks()`: on `SIGTERM` the relay stops claiming, finishes in-flight deliveries and releases its leases, then the database pool closes.
+- Until the app is created, Nest's own logger prints startup lines; then pino takes over (`bufferLogs` replays the buffered lines through pino).
+- `enableShutdownHooks()`: on `SIGTERM` the HTTP server stops, the relay stops claiming, finishes in-flight deliveries and releases its leases, buffered spans are sent, then the database pool closes.
 
 ## Scripts
 

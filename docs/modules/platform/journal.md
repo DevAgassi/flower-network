@@ -9,6 +9,46 @@ audience: [developer]
 
 Problems we hit, why they happened and how we solved them. Newest first. Entries are not rewritten when the code changes later.
 
+### No NestJS spans in traces
+
+- **When:** 2026-11-15 · PLT-05 (#27)
+- **Symptom:** traces had `http`, `express` and `pg` spans, but nothing from Nest.
+- **Cause:** `@opentelemetry/instrumentation-nestjs-core` 0.72.1 declares `supportedVersions: ">=4.0.0 <12"`; it silently skips `@nestjs/core` 12.
+- **Fix:** the instrumentation is not installed; the express route span (`request handler - /health`) names the route.
+- **Lesson:** when an instrumentation produces nothing, check its `supportedVersions` first. Re-check this one when it adds Nest 12.
+
+### Express was not traced without the ESM loader hook
+
+- **When:** 2026-11-15 · PLT-05 (#27)
+- **Symptom:** with the instrumentations registered but no ESM hook, traces had only `http` and `pg` spans.
+- **Cause:** OpenTelemetry patches CommonJS `require()` by default; Nest 12 is ESM and imports express with `import`, which only a loader hook can intercept. A hook `include` list of package names also misses a package's internal files.
+- **Fix:** [`startTracing()`](../../../apps/api/src/observability/tracing.ts) registers import-in-the-middle's synchronous hook (`module.registerHooks`) with a URL regex for the instrumented packages; it runs before the app is imported dynamically. `import-in-the-middle` is a direct dependency at the same version the instrumentations use — two copies make patching fail silently.
+- **Lesson:** in an ESM app, tracing needs a loader hook registered before the app loads; verify spans in Jaeger, not only that the SDK starts.
+
+### Grafana could not read traces from Jaeger 2.23
+
+- **When:** 2026-11-15 · PLT-05 (#27)
+- **Symptom:** the provisioned Jaeger data source in Grafana 13.2 failed its health check with `404 Not Found`.
+- **Cause:** Jaeger 2.23 serves its query API under `/api/v3/…`; Grafana's Jaeger plugin still calls the old `/api/services`.
+- **Fix:** no Jaeger data source in Grafana; traces are viewed in the Jaeger UI (:16686). A provisioned data source cannot be deleted through the API — it needs `deleteDatasources` in a provisioning file.
+- **Lesson:** check that the two ends of an integration speak the same API version before provisioning it.
+
+### A metric was registered twice at startup
+
+- **When:** 2026-11-15 · PLT-05 (#27)
+- **Symptom:** the API exited with `A metric with the name http_request_duration_seconds has already been registered`.
+- **Cause:** the histogram was created in the constructor of `HttpMetricsMiddleware`, which was also listed as a provider; Nest creates a separate instance for `consumer.apply()`.
+- **Fix:** the histogram lives in the `HttpMetrics` provider; the middleware only uses it.
+- **Lesson:** create metrics in singleton providers, never in middleware, guards or other classes Nest may instantiate more than once.
+
+### Deprecated observability packages
+
+- **When:** 2026-11-15 · PLT-05 (#27)
+- **Symptom:** the usual choices were deprecated or heavy: `prom-client` ("replaced by @prometheus-io/client"), `@opentelemetry/sdk-trace-node` ("use @opentelemetry/sdk-trace"); `@opentelemetry/sdk-node` pulled gRPC exporters and a blocked `protobufjs` install script.
+- **Cause:** the Prometheus client moved to the Prometheus organisation; OpenTelemetry JS 3 merged its trace SDK packages.
+- **Fix:** `@prometheus-io/client`, `@opentelemetry/sdk-trace` 3 with the OTLP/HTTP exporter and only the instrumentations we use.
+- **Lesson:** check `npm view <pkg> deprecated` and the dependency tree before adopting a package from memory.
+
 ### The outbox inbox table grows forever
 
 - **When:** 2026-11-15 · PLT-04 (#26)

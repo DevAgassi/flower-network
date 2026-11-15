@@ -1,4 +1,8 @@
-import { DEVELOPMENT_DATABASE_URL, parseEnv } from './env.schema.js';
+import {
+  DEVELOPMENT_DATABASE_URL,
+  DEVELOPMENT_OTLP_ENDPOINT,
+  parseEnv,
+} from './env.schema.js';
 
 describe('parseEnv', () => {
   it('applies development defaults', () => {
@@ -8,6 +12,25 @@ describe('parseEnv', () => {
       DATABASE_URL: DEVELOPMENT_DATABASE_URL,
       DATABASE_POOL_MAX: 10,
       OUTBOX_RELAY: 'on',
+      LOG_LEVEL: 'info',
+      OTEL_EXPORTER_OTLP_ENDPOINT: DEVELOPMENT_OTLP_ENDPOINT,
+      METRICS_PORT: 9464,
+    });
+  });
+
+  it('turns tracing off and logs silently outside development by default', () => {
+    expect(parseEnv({ NODE_ENV: 'test' })).toMatchObject({
+      LOG_LEVEL: 'silent',
+      OTEL_EXPORTER_OTLP_ENDPOINT: undefined,
+    });
+    expect(
+      parseEnv({
+        NODE_ENV: 'production',
+        DATABASE_URL: DEVELOPMENT_DATABASE_URL,
+      }),
+    ).toMatchObject({
+      LOG_LEVEL: 'info',
+      OTEL_EXPORTER_OTLP_ENDPOINT: undefined,
     });
   });
 
@@ -18,6 +41,9 @@ describe('parseEnv', () => {
       DATABASE_URL: 'postgresql://app:secret@db:5432/flower',
       DATABASE_POOL_MAX: '25',
       OUTBOX_RELAY: 'off',
+      LOG_LEVEL: 'debug',
+      OTEL_EXPORTER_OTLP_ENDPOINT: 'http://otel-collector:4318',
+      METRICS_PORT: '9100',
       UNRELATED: 'ignored',
     });
     expect(env).toEqual({
@@ -26,6 +52,9 @@ describe('parseEnv', () => {
       DATABASE_URL: 'postgresql://app:secret@db:5432/flower',
       DATABASE_POOL_MAX: 25,
       OUTBOX_RELAY: 'off',
+      LOG_LEVEL: 'debug',
+      OTEL_EXPORTER_OTLP_ENDPOINT: 'http://otel-collector:4318',
+      METRICS_PORT: 9100,
     });
   });
 
@@ -50,11 +79,12 @@ describe('parseEnv', () => {
         DATABASE_URL: 'mysql://db/flower',
         DATABASE_POOL_MAX: 'many',
         OUTBOX_RELAY: 'maybe',
+        LOG_LEVEL: 'loud',
       }),
     ).toThrow(
       expect.objectContaining({
         message: expect.stringMatching(
-          /NODE_ENV[\s\S]*PORT[\s\S]*DATABASE_URL[\s\S]*DATABASE_POOL_MAX[\s\S]*OUTBOX_RELAY/,
+          /NODE_ENV[\s\S]*PORT[\s\S]*DATABASE_URL[\s\S]*DATABASE_POOL_MAX[\s\S]*OUTBOX_RELAY[\s\S]*LOG_LEVEL/,
         ),
       }),
     );

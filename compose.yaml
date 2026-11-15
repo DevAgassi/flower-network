@@ -130,6 +130,17 @@ services:
       - 'host.docker.internal:host-gateway'
     restart: unless-stopped
 
+  # Traces: receives OTLP from the apps on the host and shows them in its own
+  # UI. Keeps traces in memory only; they are gone after a restart. Not wired
+  # into Grafana: Grafana's Jaeger data source still calls the /api endpoints
+  # that Jaeger 2.23 no longer serves.
+  jaeger:
+    image: jaegertracing/jaeger:2.23.0
+    ports:
+      - '127.0.0.1:${JAEGER_UI_PORT:-16686}:16686'
+      - '127.0.0.1:${OTLP_HTTP_PORT:-4318}:4318'
+    restart: unless-stopped
+
   grafana:
     image: grafana/grafana:13.2.6
     depends_on:
@@ -141,6 +152,7 @@ services:
       - '127.0.0.1:${GRAFANA_PORT:-3030}:3000'
     volumes:
       - ./infra/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./infra/grafana/dashboards:/var/lib/grafana/dashboards:ro
       - grafana-data:/var/lib/grafana
     restart: unless-stopped
 

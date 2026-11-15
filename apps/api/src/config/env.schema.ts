@@ -4,6 +4,19 @@ import { z } from 'zod';
 export const DEVELOPMENT_DATABASE_URL =
   'postgres://flower:flower@localhost:5433/flower';
 
+/** OTLP/HTTP endpoint of Jaeger in compose.yaml (development only). */
+export const DEVELOPMENT_OTLP_ENDPOINT = 'http://localhost:4318';
+
+export const LOG_LEVELS = [
+  'fatal',
+  'error',
+  'warn',
+  'info',
+  'debug',
+  'trace',
+  'silent',
+] as const;
+
 /** Empty values (`FOO=` in .env) count as "not set". */
 const optional = <T extends z.ZodType>(schema: T) =>
   z.preprocess((v) => (v === '' ? undefined : v), schema.optional());
@@ -27,6 +40,14 @@ export const envSchema = z
     // 'off' on API-only instances when separate worker processes publish
     // outbox messages; the worker itself refuses to start with 'off'.
     OUTBOX_RELAY: optional(z.enum(['on', 'off'])).transform((v) => v ?? 'on'),
+    // Default depends on the mode: 'silent' under Vitest, otherwise 'info'.
+    LOG_LEVEL: optional(z.enum(LOG_LEVELS)),
+    // Where traces are sent (OTLP/HTTP). Not set outside development = tracing off.
+    OTEL_EXPORTER_OTLP_ENDPOINT: optional(z.url({ protocol: /^https?$/ })),
+    // Port of the worker's /metrics server (the API serves /metrics on PORT).
+    METRICS_PORT: optional(z.coerce.number().int().min(1).max(65535)).transform(
+      (v) => v ?? 9464,
+    ),
   })
   .superRefine((env, ctx) => {
     if (env.NODE_ENV === 'production' && !env.DATABASE_URL) {
@@ -40,6 +61,10 @@ export const envSchema = z
   .transform((env) => ({
     ...env,
     DATABASE_URL: env.DATABASE_URL ?? DEVELOPMENT_DATABASE_URL,
+    LOG_LEVEL: env.LOG_LEVEL ?? (env.NODE_ENV === 'test' ? 'silent' : 'info'),
+    OTEL_EXPORTER_OTLP_ENDPOINT:
+      env.OTEL_EXPORTER_OTLP_ENDPOINT ??
+      (env.NODE_ENV === 'development' ? DEVELOPMENT_OTLP_ENDPOINT : undefined),
   }));
 
 export type Env = z.output<typeof envSchema>;
