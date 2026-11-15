@@ -40,6 +40,7 @@ const MODULES = {
   ADM: { name: 'admin-ui', color: '4b5563' },
   STF: { name: 'storefront', color: 'db2777' },
   CRT: { name: 'cart', color: 'ea580c' },
+  PRI: { name: 'pricing', color: 'f59e0b' },
   ORD: { name: 'orders', color: 'dc2626' },
   PAY: { name: 'payments', color: 'ca8a04' },
   FUL: { name: 'fulfillment', color: '9333ea' },
@@ -208,13 +209,24 @@ function issueRef(issue) {
   return `#${issue.number}`;
 }
 
+/** Keeps the GitHub title in sync with ROADMAP.md (ROADMAP is the source of truth). */
+function syncTitle(issue, title) {
+  if (issue.title === title) return issue;
+  const updated = api('PATCH', `repos/${OWNER}/${REPO}/issues/${issue.number}`, { title });
+  console.log(`title   ~ #${issue.number}: ${title}`);
+  return updated;
+}
+
 function createEpics(epics, stages, milestones, existing) {
   const result = new Map();
   for (const e of epics) {
+    const title = `${e.id}: ${e.title} (Stage ${e.stage})`;
     let issue = existing.get(e.id);
-    if (!issue) {
+    if (issue) {
+      issue = syncTitle(issue, title);
+    } else {
       issue = api('POST', `repos/${OWNER}/${REPO}/issues`, {
-        title: `${e.id}: ${e.title} (Stage ${e.stage})`,
+        title,
         body: [
           `**Epic** · module \`${MODULES[e.module].name}\` · Stage ${e.stage} — ${stages[e.stage]}`,
           '',
@@ -235,13 +247,16 @@ function createEpics(epics, stages, milestones, existing) {
 function createFeatures(features, stages, milestones, epicIssues, existing) {
   const result = new Map();
   for (const f of topoSort(features)) {
+    const title = `${f.id}: ${f.title}`;
     let issue = existing.get(f.id);
-    if (!issue) {
+    if (issue) {
+      issue = syncTitle(issue, title);
+    } else {
       const depsLine = f.deps.length
         ? f.deps.map((d) => `${d} (${issueRef(result.get(d))})`).join(', ')
         : '—';
       issue = api('POST', `repos/${OWNER}/${REPO}/issues`, {
-        title: `${f.id}: ${f.title}`,
+        title,
         body: [
           `**Feature ${f.id}** · module \`${MODULES[f.module].name}\` · Stage ${f.stage} — ${stages[f.stage]}`,
           '',
@@ -260,10 +275,24 @@ function createFeatures(features, stages, milestones, epicIssues, existing) {
   return result;
 }
 
+/** Returns ids of issues listed by a GET endpoint (sub-issues, blocked-by). */
+function listIssueIds(endpoint) {
+  try {
+    return new Set(api('GET', `${endpoint}?per_page=100`, undefined, { paginate: true }).flat().map((i) => i.id));
+  } catch {
+    return new Set();
+  }
+}
+
 function linkSubIssues(features, epicIssues, featureIssues) {
+  const linked = new Map();
   for (const f of features) {
     const epic = epicIssues.get(f.epic);
     const child = featureIssues.get(f.id);
+    if (!linked.has(epic.number)) {
+      linked.set(epic.number, listIssueIds(`repos/${OWNER}/${REPO}/issues/${epic.number}/sub_issues`));
+    }
+    if (linked.get(epic.number).has(child.id)) continue;
     try {
       api('POST', `repos/${OWNER}/${REPO}/issues/${epic.number}/sub_issues`, { sub_issue_id: child.id });
       console.log(`sub     + ${f.epic} <- ${f.id}`);
@@ -277,7 +306,10 @@ function linkSubIssues(features, epicIssues, featureIssues) {
 function linkDependencies(features, featureIssues) {
   for (const f of features) {
     const issue = featureIssues.get(f.id);
+    if (!f.deps.length) continue;
+    const existingDeps = listIssueIds(`repos/${OWNER}/${REPO}/issues/${issue.number}/dependencies/blocked_by`);
     for (const d of f.deps) {
+      if (existingDeps.has(featureIssues.get(d).id)) continue;
       try {
         api('POST', `repos/${OWNER}/${REPO}/issues/${issue.number}/dependencies/blocked_by`, {
           issue_id: featureIssues.get(d).id,
@@ -316,7 +348,7 @@ function ensureProject(allIssues) {
   }
 
   const fieldsQuery = `query($id: ID!) { node(id: $id) { ... on ProjectV2 { fields(first: 50) { nodes {
-      ... on ProjectV2SingleSelectField { id name options { id name } } } } } } }`;
+      ... on ProjectV2SingleSelectField { id name options { id name color description } } } } } } }`;
   const loadFields = () =>
     graphql(fieldsQuery, { id: project.id }).node.fields.nodes.filter((n) => n && n.name);
 
@@ -326,7 +358,28 @@ function ensureProject(allIssues) {
   };
   let fields = loadFields();
   for (const [name, options] of Object.entries(wanted)) {
-    if (fields.some((f) => f.name === name)) continue;
+    const current = fields.find((f) => f.name === name);
+    if (current) {
+      const missing = options.filter((o) => !current.options.some((x) => x.name === o));
+      if (!missing.length) continue;
+      // Existing options are passed back with their ids so values already set on items are preserved.
+      graphql(
+        `mutation($field: ID!, $options: [ProjectV2SingleSelectFieldOptionInput!]!) {
+           updateProjectV2Field(input: { fieldId: $field, singleSelectOptions: $options }) {
+             projectV2Field { ... on ProjectV2SingleSelectField { id } }
+           }
+         }`,
+        {
+          field: current.id,
+          options: [
+            ...current.options.map(({ id, name: n, color, description }) => ({ id, name: n, color, description })),
+            ...missing.map((o) => ({ name: o, color: 'GRAY', description: '' })),
+          ],
+        },
+      );
+      console.log(`option  + ${name}: ${missing.join(', ')}`);
+      continue;
+    }
     graphql(
       `mutation($project: ID!, $name: String!, $options: [ProjectV2SingleSelectFieldOptionInput!]!) {
          createProjectV2Field(input: { projectId: $project, dataType: SINGLE_SELECT, name: $name, singleSelectOptions: $options }) {
@@ -354,32 +407,65 @@ function ensureProject(allIssues) {
     return o.id;
   };
 
-  for (const { issue, module, type } of allIssues) {
-    const itemId = graphql(
-      `mutation($project: ID!, $content: ID!) {
-         addProjectV2ItemById(input: { projectId: $project, contentId: $content }) { item { id } }
-       }`,
-      { project: project.id, content: issue.node_id },
-    ).addProjectV2ItemById.item.id;
+  // Existing items: only empty fields are filled, values set by people (e.g. Status) are never overwritten.
+  // Items can already exist because GitHub auto-adds issues of the linked repository.
+  const existingItems = new Map();
+  const valueFragment = '... on ProjectV2ItemFieldSingleSelectValue { name }';
+  let cursor = null;
+  do {
+    const page = graphql(
+      `query($id: ID!, $after: String) { node(id: $id) { ... on ProjectV2 {
+         items(first: 100, after: $after) { pageInfo { hasNextPage endCursor } nodes {
+           id
+           content { ... on Issue { id } }
+           status: fieldValueByName(name: "Status") { ${valueFragment} }
+           module: fieldValueByName(name: "Module") { ${valueFragment} }
+           level: fieldValueByName(name: "Level") { ${valueFragment} }
+         } }
+       } } }`,
+      { id: project.id, after: cursor },
+    ).node.items;
+    for (const n of page.nodes) {
+      if (!n.content?.id) continue;
+      existingItems.set(n.content.id, {
+        id: n.id,
+        Status: n.status?.name,
+        Module: n.module?.name,
+        Level: n.level?.name,
+      });
+    }
+    cursor = page.pageInfo.hasNextPage ? page.pageInfo.endCursor : null;
+  } while (cursor);
 
+  const setField = (itemId, fieldName, optionName) =>
     graphql(
-      `mutation($p: ID!, $i: ID!, $sf: ID!, $so: String!, $mf: ID!, $mo: String!, $tf: ID!, $to: String!) {
-         s: updateProjectV2ItemFieldValue(input: { projectId: $p, itemId: $i, fieldId: $sf, value: { singleSelectOptionId: $so } }) { clientMutationId }
-         m: updateProjectV2ItemFieldValue(input: { projectId: $p, itemId: $i, fieldId: $mf, value: { singleSelectOptionId: $mo } }) { clientMutationId }
-         t: updateProjectV2ItemFieldValue(input: { projectId: $p, itemId: $i, fieldId: $tf, value: { singleSelectOptionId: $to } }) { clientMutationId }
+      `mutation($p: ID!, $i: ID!, $f: ID!, $o: String!) {
+         updateProjectV2ItemFieldValue(input: { projectId: $p, itemId: $i, fieldId: $f, value: { singleSelectOptionId: $o } }) { clientMutationId }
        }`,
-      {
-        p: project.id,
-        i: itemId,
-        sf: field('Status').id,
-        so: option('Status', 'Todo'),
-        mf: field('Module').id,
-        mo: option('Module', MODULES[module].name),
-        tf: field('Level').id,
-        to: option('Level', type),
-      },
+      { p: project.id, i: itemId, f: field(fieldName).id, o: option(fieldName, optionName) },
     );
-    console.log(`item    + #${issue.number}`);
+
+  for (const { issue, module, type } of allIssues) {
+    let item = existingItems.get(issue.node_id);
+    const isNew = !item;
+    if (isNew) {
+      const id = graphql(
+        `mutation($project: ID!, $content: ID!) {
+           addProjectV2ItemById(input: { projectId: $project, contentId: $content }) { item { id } }
+         }`,
+        { project: project.id, content: issue.node_id },
+      ).addProjectV2ItemById.item.id;
+      item = { id };
+    }
+    const desired = { Status: 'Todo', Module: MODULES[module].name, Level: type };
+    const filled = [];
+    for (const [fieldName, optionName] of Object.entries(desired)) {
+      if (item[fieldName]) continue;
+      setField(item.id, fieldName, optionName);
+      filled.push(fieldName);
+    }
+    if (isNew) console.log(`item    + #${issue.number}`);
+    else if (filled.length) console.log(`item    ~ #${issue.number}: ${filled.join(', ')}`);
   }
   return project;
 }
