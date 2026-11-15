@@ -4,11 +4,11 @@ Omnichannel e-commerce platform for a city network of flower shops: online store
 
 Built as a modular monolith (NestJS) with a TanStack Start frontend, in a pnpm + Turborepo monorepo.
 
-| Document | Purpose |
-|---|---|
-| [init.md](init.md) | Architecture specification: domain, database design, decisions (ADR), rules for AI assistants |
-| [ROADMAP.md](ROADMAP.md) | Module map, epics, feature registry with links to GitHub issues |
-| [GitHub Project](https://github.com/users/DevAgassi/projects/1) | Board with the current status of every feature |
+| Document                                                        | Purpose                                                                                       |
+| --------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| [init.md](init.md)                                              | Architecture specification: domain, database design, decisions (ADR), rules for AI assistants |
+| [ROADMAP.md](ROADMAP.md)                                        | Module map, epics, feature registry with links to GitHub issues                               |
+| [GitHub Project](https://github.com/users/DevAgassi/projects/1) | Board with the current status of every feature                                                |
 
 ## Repository layout
 
@@ -44,15 +44,15 @@ pnpm dev
 
 All commands run from the repository root through Turborepo. Turborepo builds dependencies first (`^build`) and caches results.
 
-| Command | What it does |
-|---|---|
-| `pnpm dev` | Runs all apps in watch mode |
-| `pnpm build` | Builds all packages and apps |
-| `pnpm typecheck` | Type-checks every package |
-| `pnpm lint` | Lints with oxlint |
-| `pnpm test` | Runs unit tests (Vitest) |
-| `pnpm format` / `pnpm format:check` | Formats / checks formatting with Prettier |
-| `pnpm github:sync` | Syncs ROADMAP.md to GitHub issues and the Project (needs `gh` with `repo` and `project` scopes) |
+| Command                             | What it does                                                                                    |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `pnpm dev`                          | Runs all apps in watch mode                                                                     |
+| `pnpm build`                        | Builds all packages and apps                                                                    |
+| `pnpm typecheck`                    | Type-checks every package                                                                       |
+| `pnpm lint`                         | Lints with oxlint                                                                               |
+| `pnpm test`                         | Runs unit tests (Vitest)                                                                        |
+| `pnpm format` / `pnpm format:check` | Formats / checks formatting with Prettier                                                       |
+| `pnpm github:sync`                  | Syncs ROADMAP.md to GitHub issues and the Project (needs `gh` with `repo` and `project` scopes) |
 
 Run a task for one package only:
 
@@ -69,11 +69,11 @@ pnpm turbo run build --affected
 
 ## Environment variables
 
-| Variable | App | Default | Purpose |
-|---|---|---|---|
-| `PORT` | api | `3001` | HTTP port of the API |
-| `API_URL` | web | `http://localhost:3001` | API base URL used by server functions |
-| `PORT` | web (production build) | `3000` | HTTP port of the built web server |
+| Variable  | App                    | Default                 | Purpose                               |
+| --------- | ---------------------- | ----------------------- | ------------------------------------- |
+| `PORT`    | api                    | `3001`                  | HTTP port of the API                  |
+| `API_URL` | web                    | `http://localhost:3001` | API base URL used by server functions |
+| `PORT`    | web (production build) | `3000`                  | HTTP port of the built web server     |
 
 ## Conventions
 
