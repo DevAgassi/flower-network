@@ -16,7 +16,26 @@
     "dev": {
       "dependsOn": ["^build"],
       "cache": false,
-      "persistent": true
+      "persistent": true,
+      "passThroughEnv": [
+        "NODE_ENV",
+        "PORT",
+        "DATABASE_URL",
+        "DATABASE_POOL_MAX",
+        "API_URL"
+      ]
+    },
+    "start": {
+      "dependsOn": ["build"],
+      "cache": false,
+      "persistent": true,
+      "passThroughEnv": [
+        "NODE_ENV",
+        "PORT",
+        "DATABASE_URL",
+        "DATABASE_POOL_MAX",
+        "API_URL"
+      ]
     }
   }
 }

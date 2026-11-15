@@ -1,9 +1,17 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "unicorn", "oxc", "node"],
   "rules": {
     "typescript/no-explicit-any": "off",
-    "typescript/no-floating-promises": "error"
+    "typescript/no-floating-promises": "error",
+    "node/no-process-env": "error"
   },
+  "overrides": [
+    {
+      "files": ["src/config/**"],
+      "rules": { "node/no-process-env": "off" }
+    }
+  ],
   "env": {
     "node": true
   }

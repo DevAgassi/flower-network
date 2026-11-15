@@ -1,8 +1,17 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["typescript", "react", "oxc", "unicorn"],
+  "plugins": ["typescript", "react", "oxc", "unicorn", "node"],
   "env": {
     "browser": true
   },
+  "rules": {
+    "node/no-process-env": "error"
+  },
+  "overrides": [
+    {
+      "files": ["src/env.server.ts", "src/server-plugins/**"],
+      "rules": { "node/no-process-env": "off" }
+    }
+  ],
   "ignorePatterns": ["src/routeTree.gen.ts"]
 }
