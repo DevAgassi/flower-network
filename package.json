@@ -2,6 +2,7 @@
   "name": "flower-network",
   "private": true,
   "packageManager": "pnpm@12.21.0",
+  "license": "MIT",
   "engines": {
     "node": ">=24"
   },

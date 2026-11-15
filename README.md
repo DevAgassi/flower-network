@@ -101,3 +101,7 @@ Statuses set on the board are never overwritten; new issues start in **Backlog**
 - **Shared code:** add it to a package in `packages/*` and depend on it with `"workspace:*"`. Import only what the package exports — never deep paths into another package.
 - **Formatting:** Prettier at the root. `ROADMAP.md` and `init.md` are excluded because the sync script parses their tables.
 - **Workflow:** one branch and pull request per feature; the PR description closes the feature issue (`Closes #<number>`).
+
+## License
+
+[MIT](LICENSE)
