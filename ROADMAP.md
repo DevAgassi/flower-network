@@ -38,6 +38,7 @@ flowchart LR
     PRC[procurement]
     INV[inventory]
     CRT[cart]
+    PRI[pricing]
     ORD[orders]
     PAY[payments]
     FUL[fulfillment]
@@ -54,8 +55,9 @@ flowchart LR
   CAT --> LOC
   INV --> CAT & LOC
   PRC --> INV
-  CRT --> CAT & INV
-  ORD --> CRT & INV & FUL
+  CRT --> CAT & INV & PRI
+  PRI --> CAT
+  ORD --> CRT & INV & FUL & PRI
   FUL --> LOC
   POS --> ORD & INV & PAY & FSC
 
@@ -98,6 +100,7 @@ flowchart TB
     E_NTF_S3["NTF · Notifications"]
     E_IAM_S3["IAM · Customers"]
     E_INV_S3["INV · Availability"]
+    E_PRI_S3["PRI · Pricing & promotions"]
   end
 
   subgraph S4["Stage 4 · POS, Analytics, Hardening"]
@@ -118,7 +121,7 @@ flowchart TB
   classDef blocked fill:#fecaca,stroke:#b91c1c,color:#111827
 
   %% status:start
-  class E_PLT_S1,E_IAM_S1,E_LOC_S2,E_CAT_S2,E_PRC_S2,E_INV_S2,E_ADM_S2,E_STF_S3,E_CRT_S3,E_ORD_S3,E_PAY_S3,E_FUL_S3,E_NTF_S3,E_IAM_S3,E_INV_S3,E_POS_S4,E_FSC_S4,E_ORD_S4,E_PAY_S4,E_ANL_S4,E_INV_S4,E_PLT_S4 todo
+  class E_PLT_S1,E_IAM_S1,E_LOC_S2,E_CAT_S2,E_PRC_S2,E_INV_S2,E_ADM_S2,E_STF_S3,E_CRT_S3,E_ORD_S3,E_PAY_S3,E_FUL_S3,E_NTF_S3,E_IAM_S3,E_INV_S3,E_PRI_S3,E_POS_S4,E_FSC_S4,E_ORD_S4,E_PAY_S4,E_ANL_S4,E_INV_S4,E_PLT_S4 todo
   %% status:end
 ```
 
@@ -142,6 +145,7 @@ flowchart TB
 | E_NTF_S3 | Notifications | [#13](https://github.com/DevAgassi/flower-network/issues/13) |
 | E_IAM_S3 | Customers | [#14](https://github.com/DevAgassi/flower-network/issues/14) |
 | E_INV_S3 | Availability | [#15](https://github.com/DevAgassi/flower-network/issues/15) |
+| E_PRI_S3 | Pricing & promotions | [#82](https://github.com/DevAgassi/flower-network/issues/82) |
 | E_POS_S4 | Point of sale | [#16](https://github.com/DevAgassi/flower-network/issues/16) |
 | E_FSC_S4 | Fiscal | [#17](https://github.com/DevAgassi/flower-network/issues/17) |
 | E_ORD_S4 | Returns | [#18](https://github.com/DevAgassi/flower-network/issues/18) |
@@ -178,7 +182,7 @@ The `Issue` column is filled in once the issue is created.
 |---|---|---|---|---|---|
 | LOC-01 | E_LOC_S2 | Locations: stores & warehouses, coordinates, opening hours | PLT-03 | todo | [#33](https://github.com/DevAgassi/flower-network/issues/33) |
 | CAT-01 | E_CAT_S2 | Products & variants (master variant) | PLT-03 | todo | [#34](https://github.com/DevAgassi/flower-network/issues/34) |
-| CAT-02 | E_CAT_S2 | Taxon tree (materialized path / nested sets) | CAT-01 | todo | [#35](https://github.com/DevAgassi/flower-network/issues/35) |
+| CAT-02 | E_CAT_S2 | Taxonomies (multiple trees: category, occasion) and taxons on `ltree` | CAT-01 | todo | [#35](https://github.com/DevAgassi/flower-network/issues/35) |
 | CAT-03 | E_CAT_S2 | Option types / attributes | CAT-01 | todo | [#36](https://github.com/DevAgassi/flower-network/issues/36) |
 | CAT-04 | E_CAT_S2 | Prices (UAH, kopecks) | CAT-01 | todo | [#37](https://github.com/DevAgassi/flower-network/issues/37) |
 | CAT-05 | E_CAT_S2 | Media upload to MinIO | CAT-01, PLT-01 | todo | [#38](https://github.com/DevAgassi/flower-network/issues/38) |
@@ -203,14 +207,18 @@ The `Issue` column is filled in once the issue is created.
 | STF-01 | E_STF_S3 | Catalog pages: SSR, slugs, sitemap, typed search params | CAT-01…CAT-05, PLT-06 | todo | [#52](https://github.com/DevAgassi/flower-network/issues/52) |
 | STF-02 | E_STF_S3 | Filter by availability in a selected store | STF-01, INV-07 | todo | [#53](https://github.com/DevAgassi/flower-network/issues/53) |
 | STF-03 | E_STF_S3 | Checkout UI: pickup / delivery, recipient, card message, slot | CRT-01, FUL-01…FUL-04 | todo | [#60](https://github.com/DevAgassi/flower-network/issues/60) |
-| CRT-01 | E_CRT_S3 | Redis cart with TTL; price & stock re-check at checkout | CAT-04, INV-07 | todo | [#54](https://github.com/DevAgassi/flower-network/issues/54) |
-| ORD-01 | E_ORD_S3 | Order model: items snapshot (incl. cost), adjustments | CRT-01 | todo | [#55](https://github.com/DevAgassi/flower-network/issues/55) |
+| PRI-01 | E_PRI_S3 | Shared `PriceCalculator`: line totals, adjustments, delivery cost | CAT-04 | todo | [#83](https://github.com/DevAgassi/flower-network/issues/83) |
+| PRI-02 | E_PRI_S3 | Promo codes: promotions, rules, actions, coupon codes | PRI-01 | todo | [#84](https://github.com/DevAgassi/flower-network/issues/84) |
+| CRT-01 | E_CRT_S3 | Cart module: PostgreSQL `carts` / `cart_items` behind `CartRepository`, expiry cleanup, re-check at checkout (ADR-9) | CAT-04, INV-07, PRI-01 | todo | [#54](https://github.com/DevAgassi/flower-network/issues/54) |
+| ORD-01 | E_ORD_S3 | Order model: `number`, `token`, items snapshot (incl. cost), adjustments by level & source | CRT-01 | todo | [#55](https://github.com/DevAgassi/flower-network/issues/55) |
+| ORD-05 | E_ORD_S3 | State change history (`state_changes`) for orders, payments, shipments | ORD-02 | todo | [#85](https://github.com/DevAgassi/flower-network/issues/85) |
+| ORD-06 | E_ORD_S3 | Denormalized order totals recalculated only by `OrderUpdater` | ORD-01, PRI-01 | todo | [#86](https://github.com/DevAgassi/flower-network/issues/86) |
 | ORD-02 | E_ORD_S3 | State machines: `state`, `payment_state`, `shipment_state` | ORD-01 | todo | [#61](https://github.com/DevAgassi/flower-network/issues/61) |
 | ORD-03 | E_ORD_S3 | Stock reservations: 15 min online / pickup window, BullMQ expiry, `pickup_expired` | ORD-02, INV-01 | todo | [#62](https://github.com/DevAgassi/flower-network/issues/62) |
 | PAY-01 | E_PAY_S3 | Payments model and `PaymentProvider` interface | ORD-01 | todo | [#63](https://github.com/DevAgassi/flower-network/issues/63) |
 | PAY-02 | E_PAY_S3 | ADR-4: provider integration, idempotent webhooks (`payment_events`) | PAY-01, PLT-04 | todo | [#64](https://github.com/DevAgassi/flower-network/issues/64) |
 | FUL-01 | E_FUL_S3 | Shipments: pickup / courier, single fulfilling location (ADR-2) | ORD-01, LOC-01 | todo | [#56](https://github.com/DevAgassi/flower-network/issues/56) |
-| FUL-02 | E_FUL_S3 | Delivery zones & pricing (ADR-8) | FUL-01 | todo | [#57](https://github.com/DevAgassi/flower-network/issues/57) |
+| FUL-02 | E_FUL_S3 | Delivery zones & pricing (ADR-8), `shipping_rates` with selected rate | FUL-01 | todo | [#57](https://github.com/DevAgassi/flower-network/issues/57) |
 | FUL-03 | E_FUL_S3 | Delivery time slots with capacity | FUL-01 | todo | [#58](https://github.com/DevAgassi/flower-network/issues/58) |
 | FUL-04 | E_FUL_S3 | Recipient fields, card message, anonymous delivery | FUL-01 | todo | [#59](https://github.com/DevAgassi/flower-network/issues/59) |
 | NTF-01 | E_NTF_S3 | ADR-5: `NotificationChannel` interface, templates | PLT-04 | todo | [#65](https://github.com/DevAgassi/flower-network/issues/65) |
@@ -227,11 +235,11 @@ The `Issue` column is filled in once the issue is created.
 | POS-04 | E_POS_S4 | Custom bouquet at POS (components consumed from stock) | POS-01, INV-06 | todo | [#71](https://github.com/DevAgassi/flower-network/issues/71) |
 | POS-05 | E_POS_S4 | Pickup handover with pay-on-pickup | POS-01, ORD-03 | todo | [#72](https://github.com/DevAgassi/flower-network/issues/72) |
 | FSC-01 | E_FSC_S4 | `FiscalProvider` interface + stub implementation | PAY-01 | todo | [#73](https://github.com/DevAgassi/flower-network/issues/73) |
-| ORD-04 | E_ORD_S4 | Returns: restock or write-off | ORD-02, INV-03 | todo | [#74](https://github.com/DevAgassi/flower-network/issues/74) |
+| ORD-04 | E_ORD_S4 | Returns: authorizations, return items, reasons; restock or write-off | ORD-02, INV-03 | todo | [#74](https://github.com/DevAgassi/flower-network/issues/74) |
 | PAY-03 | E_PAY_S4 | Refunds | PAY-02, ORD-04 | todo | [#75](https://github.com/DevAgassi/flower-network/issues/75) |
 | ANL-01 | E_ANL_S4 | Materialized views + concurrent refresh cron | ORD-02, INV-03 | todo | [#76](https://github.com/DevAgassi/flower-network/issues/76) |
 | ANL-02 | E_ANL_S4 | Rollup table via outbox, idempotent increments | PLT-04, ORD-02 | todo | [#77](https://github.com/DevAgassi/flower-network/issues/77) |
 | ANL-03 | E_ANL_S4 | Owner dashboard: sales, margin, waste in UAH | ANL-01, ANL-02 | todo | [#78](https://github.com/DevAgassi/flower-network/issues/78) |
 | INV-08 | E_INV_S4 | Nightly ledger reconciliation job | INV-01 | todo | [#79](https://github.com/DevAgassi/flower-network/issues/79) |
-| PLT-09 | E_PLT_S4 | k6 load tests incl. concurrent POS + online sale of the last item | POS-01, ORD-03 | todo | [#80](https://github.com/DevAgassi/flower-network/issues/80) |
+| PLT-09 | E_PLT_S4 | k6 load tests incl. concurrent POS + online sale of the last item; cart storage benchmark (PostgreSQL vs Redis) | POS-01, ORD-03 | todo | [#80](https://github.com/DevAgassi/flower-network/issues/80) |
 | PLT-10 | E_PLT_S4 | ADR-7: deployment target, PostgreSQL backups | — | todo | [#81](https://github.com/DevAgassi/flower-network/issues/81) |
