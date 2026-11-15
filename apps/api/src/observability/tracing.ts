@@ -26,6 +26,7 @@ import type { Env } from '../config/env.schema.js';
  *
  * No NestJS instrumentation: @opentelemetry/instrumentation-nestjs-core
  * supports @nestjs/core < 12 only. Express spans already name the route.
+ * Added back in PLT-13 (#98) once a release supports Nest 12.
  */
 const INSTRUMENTED_MODULES: Array<string | RegExp> = [
   'http',

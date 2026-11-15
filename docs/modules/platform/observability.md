@@ -65,7 +65,7 @@ The instrumentations patch libraries as they load, so anything imported earlier 
 | `express`    | Middlewares and the route handler (`request handler - /health`)         |
 | `pg`         | Every query inside a request (`pg.query:SELECT flower`), pool connects  |
 
-- There are **no NestJS spans**: `@opentelemetry/instrumentation-nestjs-core` supports `@nestjs/core` < 12 only. The express route span already names the route.
+- There are **no NestJS spans**: `@opentelemetry/instrumentation-nestjs-core` supports `@nestjs/core` < 12 only. The express route span already names the route. Added in PLT-13 ([#98](https://github.com/DevAgassi/flower-network/issues/98)) once upstream supports Nest 12.
 - Queries outside a request (the outbox relay polls every second) are **not** traced (`requireParentSpan`), otherwise every poll would be a trace.
 - `/metrics` requests are not traced.
 - Spans are batched and sent over OTLP/HTTP to `OTEL_EXPORTER_OTLP_ENDPOINT`. In development it defaults to the local Jaeger; elsewhere tracing is off unless the variable is set. Buffered spans are flushed on shutdown.
