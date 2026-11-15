@@ -54,7 +54,7 @@
   * Real-time сповіщення (нові онлайн-замовлення для флористів на точках): **WebSockets / SSE**.
   * ORM / query builder: **Drizzle ORM** + drizzle-kit для міграцій (ADR-1).
   * Менеджер процесів (PM2) не використовується: перезапуск і масштабування робить Docker / оркестратор (один процес на контейнер).
-* **Монорепозиторій (ADR-10):** pnpm 12 workspaces + Turborepo 2. Застосунки — `apps/api` (NestJS 12, ESM), `apps/web` (TanStack Start); спільний код — `packages/*` (`@flower/shared`, `@flower/typescript-config`). Структура описана в [README.md](README.md).
+* **Монорепозиторій (ADR-10):** pnpm 12 workspaces + Turborepo 2. Застосунки — `apps/api` (NestJS 12, ESM), `apps/web` (TanStack Start); спільний код — `packages/*` (`@flower/shared`, `@flower/typescript-config`). Структура описана в [docs/modules/platform/monorepo.md](docs/modules/platform/monorepo.md).
 * **Конфігурація та режими:** `NODE_ENV` (`development` / `test` / `production`); змінні середовища валідуються zod-схемою при старті (api — `@nestjs/config` + zod, web — zod у Nitro-плагіні). Development читає `.env`, production — лише реальні змінні (12-factor). `pnpm dev` — режим розробки, `pnpm start` — зібрані застосунки в production-режимі.
 * **Контракт API:**
   * OpenAPI-схема генерується з NestJS (`@nestjs/swagger`).
@@ -295,8 +295,9 @@
 10. NestJS 12 — ESM-only: відносні імпорти в `apps/api` закінчуються на `.js`, `__dirname` немає (`import.meta.dirname`), моки в тестах — `vi.fn()` (Vitest).
 11. Спільний код — лише в `packages/*` з явним полем `exports`; імпорт тільки того, що пакет експортує, без глибоких шляхів у чужий пакет.
 12. БД (Drizzle): таблиці модуля — у `src/<module>/<module>.schema.ts`, реєстрація — у `src/database/schema.ts`; доступ — через `@Inject(DATABASE)`. Міграції лише генеруються drizzle-kit (або `--custom` для розширень / views); застосовану міграцію не редагувати — додавати нову. Міграції запускаються окремою командою, не при старті застосунку.
-13. Конфігурація: кожна змінна середовища оголошується в zod-схемі застосунку (`apps/api/src/config/env.schema.ts`, `apps/web/src/env.server.ts`) і перевіряється при старті — у production застосунок не запускається без обов'язкових значень. Код читає змінні лише через `AppConfigService` (api) або `getServerEnv()` (web); прямий `process.env` поза файлами конфігурації заборонений (oxlint `node/no-process-env`). Нову змінну також додавати в `turbo.json` → `passThroughEnv` і README.
+13. Конфігурація: кожна змінна середовища оголошується в zod-схемі застосунку (`apps/api/src/config/env.schema.ts`, `apps/web/src/env.server.ts`) і перевіряється при старті — у production застосунок не запускається без обов'язкових значень. Код читає змінні лише через `AppConfigService` (api) або `getServerEnv()` (web); прямий `process.env` поза файлами конфігурації заборонений (oxlint `node/no-process-env`). Нову змінну також додавати в `turbo.json` → `passThroughEnv` і `docs/modules/platform/configuration.md`.
 14. Події між модулями — лише через outbox: `outbox.add(tx, { topic, key, payload })` всередині `db.transaction()` тієї самої бізнес-зміни (ніколи `event-emitter` чи прямий виклик іншого модуля); обробник — `@OnOutboxMessage(topic, { consumer })` зі стабільною назвою `consumer`, ідемпотентний; зміни в БД з обробника — через `ctx.processInTransaction(tx, …)`.
+15. Документація — у `docs/` (правила в `docs/README.md`), оновлюється в тому ж PR, що й код: змінилась поведінка — оновити reference модуля; з'явився екран для персоналу — додати guide для кожної ролі з її `audience`; розв'язано неочевидну проблему — запис у `journal.md` модуля (симптом, причина, виправлення, урок). Перед роботою над модулем прочитати його `docs/modules/<module>/` і journal. Секретів і персональних даних у `docs/` немає: репозиторій публічний.
 
 ---
 

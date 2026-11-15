@@ -192,6 +192,7 @@ The `Issue` column is filled in once the issue is created.
 | PLT-07 | E_PLT_S1 | CI: lint, typecheck, tests, migration check | PLT-02 | todo | [#29](https://github.com/DevAgassi/flower-network/issues/29) |
 | PLT-08 | E_PLT_S1 | Seed data generator (locations, catalog, stock at volume) | PLT-03 | todo | [#30](https://github.com/DevAgassi/flower-network/issues/30) |
 | PLT-11 | E_PLT_S1 | Environment configuration: zod-validated env, development / production modes, `pnpm start` | PLT-02 | done | [#91](https://github.com/DevAgassi/flower-network/issues/91) |
+| PLT-12 | E_PLT_S1 | Project documentation: `docs/` per module and service (reference, journal, role guides), `CLAUDE.md` | PLT-02 | done | [#94](https://github.com/DevAgassi/flower-network/issues/94) |
 | IAM-01 | E_IAM_S1 | Staff users, authentication, sessions in Redis | PLT-03 | todo | [#31](https://github.com/DevAgassi/flower-network/issues/31) |
 | IAM-02 | E_IAM_S1 | Roles & permissions (owner, admin, florist, courier), `staff_locations` | IAM-01 | todo | [#32](https://github.com/DevAgassi/flower-network/issues/32) |
 
@@ -217,6 +218,7 @@ The `Issue` column is filled in once the issue is created.
 | ADM-01 | E_ADM_S2 | Admin shell: layout, login, role-based navigation | IAM-02 | todo | [#48](https://github.com/DevAgassi/flower-network/issues/48) |
 | ADM-02 | E_ADM_S2 | Catalog management screens | ADM-01, CAT-01…CAT-06 | todo | [#49](https://github.com/DevAgassi/flower-network/issues/49) |
 | ADM-03 | E_ADM_S2 | Inventory & procurement screens (receipts, transfers, counts, write-offs) | ADM-01, INV-01…INV-06, PRC-02 | todo | [#50](https://github.com/DevAgassi/flower-network/issues/50) |
+| ADM-04 | E_ADM_S2 | Documentation section: `docs/` rendered in the admin, filtered by role on the server | ADM-01, PLT-12 | todo | [#95](https://github.com/DevAgassi/flower-network/issues/95) |
 
 ### Stage 3 · Storefront, Checkout, Payments, Delivery
 
