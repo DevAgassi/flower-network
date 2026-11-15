@@ -20,7 +20,7 @@ Before working on a module, read its `docs/modules/<module>/` folder, including 
 
 ```bash
 pnpm install
-pnpm infra:up                          # Docker: PostgreSQL :5433, pgAdmin :5051, Redis, S3, Prometheus, Grafana :3030
+pnpm infra:up                          # Docker: PostgreSQL :5433, pgAdmin :5051, Redis, S3, Prometheus, Grafana :3030, Jaeger :16686
 pnpm db:migrate                        # Drizzle migrations + outbox schema
 pnpm dev                               # api :3001 (with outbox relay) + web :3000
 
@@ -38,10 +38,11 @@ oxlint prints nothing when there are no problems.
 
 ```
 apps/api/src/
-  main.ts, worker.ts      entry points: HTTP API / outbox relay + jobs (no HTTP)
+  main.ts, worker.ts      entry points: start tracing, then import processes/api.ts | processes/worker.ts
   config/                 zod env schema, AppConfigModule, AppConfigService
   database/               DatabaseModule (DATABASE token, Transaction type), schema.ts registry
   outbox/                 AppOutboxModule (@nestjs/outbox, schema nest_outbox), inbox retention
+  observability/          OpenTelemetry tracing, pino logging, Prometheus metrics (GET /metrics)
   health/                 GET /health (database, outbox)
   <module>/               business modules, from Stage 2
 apps/api/test/            e2e tests
@@ -60,6 +61,7 @@ docs/                     documentation (rules: docs/README.md)
 - **Events:** only through the outbox — `outbox.add(tx, { topic, key, payload })` inside the `db.transaction()` of the change. Handlers: `@OnOutboxMessage(topic, { consumer })` with a permanent consumer name, idempotent, writes via `ctx.processInTransaction(tx, …)`.
 - **Domain:** multi-location (`location_id`) and variant-level (`variant_id`); stock changes in a transaction with a `stock_movements` record; money `bigint` kopecks; time `timestamptz` UTC. Full list: init.md §8.
 - **Shared code:** in `packages/*`, imported only through the package's `exports`.
+- **Logs and metrics:** log with Nest's `Logger` (pino underneath), never `console.log` in app code; no secrets or personal data in logs. Metrics register on the injected global `Registry`; label values from small fixed sets only.
 - **Long-lived clients** (pg, Redis, BullMQ) need an `error` listener, or a dropped connection crashes the process.
 
 ## Workflow

@@ -35,6 +35,8 @@ The mode is `NODE_ENV`: `development` (default), `test` (set by Vitest) or `prod
 | Missing variables    | Local defaults that match `compose.yaml`                                 | Required variables must be set, otherwise the app exits     |
 | Code                 | Watch mode (Nest, Vite)                                                  | Built output (`pnpm start` builds first)                    |
 | Outbox schema        | Created at startup                                                       | Applied by `pnpm db:migrate`; startup fails if it is behind |
+| Logs                 | Colored single lines                                                     | One JSON object per line on stdout                          |
+| Tracing              | On, sent to the local Jaeger                                             | Off unless `OTEL_EXPORTER_OTLP_ENDPOINT` is set             |
 
 An invalid environment prints every problem at once and exits with code 1:
 
@@ -58,15 +60,18 @@ $env:DATABASE_URL="postgres://flower:flower@localhost:5433/flower"; $env:API_URL
 
 ## Variables
 
-| Variable            | App                | Default (outside production)                     | Production                    | Purpose                                                                                  |
-| ------------------- | ------------------ | ------------------------------------------------ | ----------------------------- | ---------------------------------------------------------------------------------------- |
-| `NODE_ENV`          | api, web           | `development`                                    | `production` (set by `start`) | Mode, see above                                                                          |
-| `PORT`              | api                | `3001`                                           | optional                      | HTTP port of the API                                                                     |
-| `DATABASE_URL`      | api                | `postgres://flower:flower@localhost:5433/flower` | **required**                  | PostgreSQL connection string (also used by drizzle-kit)                                  |
-| `DATABASE_POOL_MAX` | api                | `10`                                             | optional (1–100)              | Maximum connections in the pool                                                          |
-| `OUTBOX_RELAY`      | api                | `on`                                             | `off` on API-only instances   | `on`: this process publishes outbox messages; `off`: only adds them (a worker publishes) |
-| `API_URL`           | web                | `http://localhost:3001`                          | **required**                  | API base URL used by server functions                                                    |
-| `PORT`              | web (built server) | `3000`                                           | optional                      | HTTP port of the built web server                                                        |
+| Variable                      | App                | Default (outside production)                                          | Production                      | Purpose                                                                                  |
+| ----------------------------- | ------------------ | --------------------------------------------------------------------- | ------------------------------- | ---------------------------------------------------------------------------------------- |
+| `NODE_ENV`                    | api, web           | `development`                                                         | `production` (set by `start`)   | Mode, see above                                                                          |
+| `PORT`                        | api                | `3001`                                                                | optional                        | HTTP port of the API                                                                     |
+| `DATABASE_URL`                | api                | `postgres://flower:flower@localhost:5433/flower`                      | **required**                    | PostgreSQL connection string (also used by drizzle-kit)                                  |
+| `DATABASE_POOL_MAX`           | api                | `10`                                                                  | optional (1–100)                | Maximum connections in the pool                                                          |
+| `OUTBOX_RELAY`                | api                | `on`                                                                  | `off` on API-only instances     | `on`: this process publishes outbox messages; `off`: only adds them (a worker publishes) |
+| `LOG_LEVEL`                   | api                | `info` (`silent` under Vitest)                                        | optional                        | `fatal`, `error`, `warn`, `info`, `debug`, `trace` or `silent`                           |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | api                | `http://localhost:4318` (Jaeger) in development; not set under Vitest | optional; not set = tracing off | OTLP/HTTP endpoint for traces, without `/v1/traces`                                      |
+| `METRICS_PORT`                | api (worker)       | `9464`                                                                | optional                        | Port of the worker's `/metrics`; the API serves `/metrics` on `PORT`                     |
+| `API_URL`                     | web                | `http://localhost:3001`                                               | **required**                    | API base URL used by server functions                                                    |
+| `PORT`                        | web (built server) | `3000`                                                                | optional                        | HTTP port of the built web server                                                        |
 
 An empty value (`FOO=` in `.env`) counts as not set.
 

@@ -9,6 +9,14 @@ audience: [developer]
 
 Problems with tooling, the board and the workflow. Newest first. Entries are not rewritten later.
 
+### Work started before the issue description was published
+
+- **When:** 2026-11-15 · PLT-05 (#27)
+- **Symptom:** packages were already being installed while the issue still had only its generated header; the owner could not follow what was being done.
+- **Cause:** research and implementation flowed together; the description was planned for "after the decisions".
+- **Fix:** the description was published mid-way.
+- **Lesson:** research may come first, but the issue description is published before any change on the branch — installs included.
+
 ### Merging a stack of pull requests in a loop broke the stack
 
 - **When:** 2026-11-15 · PLT-03 (#90)

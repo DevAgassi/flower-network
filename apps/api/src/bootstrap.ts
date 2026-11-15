@@ -1,11 +1,10 @@
 import type { LogLevel } from '@nestjs/common';
 
 /**
- * Startup log levels: 'error' is left out so a startup failure (e.g. invalid
- * environment) is printed once by runOrExit, as a plain message.
+ * Log levels until pino takes over: 'error' is left out so a startup failure
+ * (e.g. invalid environment) is printed once by runOrExit, as a plain message.
  */
 export const STARTUP_LOG_LEVELS: LogLevel[] = ['log', 'warn', 'fatal'];
-export const RUNTIME_LOG_LEVELS: LogLevel[] = ['log', 'warn', 'error', 'fatal'];
 
 /**
  * Runs an entry point; on failure prints the message and exits with code 1.

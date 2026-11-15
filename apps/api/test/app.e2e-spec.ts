@@ -29,6 +29,31 @@ describe('Health (e2e)', () => {
     });
   });
 
+  it('returns the x-request-id it was given, or a generated one', async () => {
+    const given = await request(app.getHttpServer())
+      .get('/health')
+      .set('x-request-id', 'e2e-request-1');
+    const generated = await request(app.getHttpServer()).get('/health');
+
+    expect(given.headers['x-request-id']).toBe('e2e-request-1');
+    expect(generated.headers['x-request-id']).toMatch(/^[\da-f-]{36}$/);
+  });
+
+  it('GET /metrics exposes runtime, HTTP and outbox metrics', async () => {
+    await request(app.getHttpServer()).get('/health').expect(200);
+
+    const response = await request(app.getHttpServer())
+      .get('/metrics')
+      .expect(200)
+      .expect('Content-Type', /text\/plain/);
+
+    expect(response.text).toContain('process_cpu_user_seconds_total');
+    expect(response.text).toMatch(
+      /http_request_duration_seconds_count\{method="GET",route="\/health",status="200"\} \d+/,
+    );
+    expect(response.text).toContain('outbox_messages_pending');
+  });
+
   afterEach(async () => {
     await app.close();
   });

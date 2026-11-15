@@ -6,8 +6,12 @@ scrape_configs:
     static_configs:
       - targets: ['localhost:9090']
 
-  # The API metrics endpoint is added with PLT-05; apps run on the host during development:
-  # - job_name: api
-  #   metrics_path: /metrics
-  #   static_configs:
-  #     - targets: ['host.docker.internal:3001']
+  # Apps run on the host during development (pnpm dev). A target is DOWN while
+  # its process is not running, e.g. the worker unless `dev:worker` is started.
+  - job_name: api
+    static_configs:
+      - targets: ['host.docker.internal:3001']
+
+  - job_name: worker
+    static_configs:
+      - targets: ['host.docker.internal:9464']

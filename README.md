@@ -55,6 +55,7 @@ pnpm dev
 | S3 storage (RustFS) | http://localhost:9000, console :9001 | `flower` / `flower-secret` |
 | Prometheus          | http://localhost:9090                | —                          |
 | Grafana             | http://localhost:3030                | `admin` / `admin`          |
+| Jaeger (traces)     | http://localhost:16686               | —                          |
 
 Details and commands: [Local infrastructure](docs/modules/platform/local-infrastructure.md).
 
@@ -83,6 +84,7 @@ All commands run from the repository root through Turborepo.
 | Environment variables, development/production | [Configuration](docs/modules/platform/configuration.md)                                           |
 | Drizzle, schemas, migrations                  | [Database](docs/modules/platform/database.md)                                                     |
 | Events between modules                        | [Outbox](docs/modules/platform/outbox.md)                                                         |
+| Logs, traces, metrics                         | [Observability](docs/modules/platform/observability.md)                                           |
 | API, worker, health check                     | [API and worker](docs/apps/api.md)                                                                |
 | Frontend                                      | [Web](docs/apps/web.md)                                                                           |
 | Issues, branches, pull requests, board        | [Workflow](docs/process/workflow.md)                                                              |
