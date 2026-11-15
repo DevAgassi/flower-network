@@ -15,7 +15,7 @@ Problems we hit, why they happened and how we solved them. Newest first. Entries
 - **Symptom:** traces had `http`, `express` and `pg` spans, but nothing from Nest.
 - **Cause:** `@opentelemetry/instrumentation-nestjs-core` 0.72.1 declares `supportedVersions: ">=4.0.0 <12"`; it silently skips `@nestjs/core` 12.
 - **Fix:** the instrumentation is not installed; the express route span (`request handler - /health`) names the route.
-- **Lesson:** when an instrumentation produces nothing, check its `supportedVersions` first. Re-check this one when it adds Nest 12.
+- **Lesson:** when an instrumentation produces nothing, check its `supportedVersions` first. Follow-up: PLT-13 ([#98](https://github.com/DevAgassi/flower-network/issues/98)), blocked until [opentelemetry-js-contrib#3859](https://github.com/open-telemetry/opentelemetry-js-contrib/pull/3859) is released.
 
 ### Express was not traced without the ESM loader hook
 
