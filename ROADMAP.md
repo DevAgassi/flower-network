@@ -191,6 +191,7 @@ The `Issue` column is filled in once the issue is created.
 | PLT-06 | E_PLT_S1 | OpenAPI generation and typed frontend client | PLT-02 | todo | [#28](https://github.com/DevAgassi/flower-network/issues/28) |
 | PLT-07 | E_PLT_S1 | CI: lint, typecheck, tests, migration check | PLT-02 | todo | [#29](https://github.com/DevAgassi/flower-network/issues/29) |
 | PLT-08 | E_PLT_S1 | Seed data generator (locations, catalog, stock at volume) | PLT-03 | todo | [#30](https://github.com/DevAgassi/flower-network/issues/30) |
+| PLT-11 | E_PLT_S1 | Environment configuration: zod-validated env, development / production modes, `pnpm start` | PLT-02 | done | [#91](https://github.com/DevAgassi/flower-network/issues/91) |
 | IAM-01 | E_IAM_S1 | Staff users, authentication, sessions in Redis | PLT-03 | todo | [#31](https://github.com/DevAgassi/flower-network/issues/31) |
 | IAM-02 | E_IAM_S1 | Roles & permissions (owner, admin, florist, courier), `staff_locations` | IAM-01 | todo | [#32](https://github.com/DevAgassi/flower-network/issues/32) |
 

@@ -6,3 +6,6 @@ packages:
 allowBuilds:
   esbuild: true
   lightningcss: true
+
+# Cross-platform script shell, so `NODE_ENV=production node ...` works on Windows too.
+shellEmulator: true

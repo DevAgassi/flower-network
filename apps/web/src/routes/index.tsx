@@ -1,9 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { createServerFn } from '@tanstack/react-start';
 import type { HealthResponse } from '@flower/shared';
-
-/** Default API location for local development; override with API_URL. */
-const DEFAULT_API_URL = 'http://localhost:3001';
+import { getServerEnv } from '#/env.server';
 
 /**
  * Runs on the server only, so the API URL never reaches the browser bundle.
@@ -12,9 +10,8 @@ const DEFAULT_API_URL = 'http://localhost:3001';
  */
 const getApiHealth = createServerFn({ method: 'GET' }).handler(
   async (): Promise<HealthResponse | null> => {
-    const apiUrl = process.env.API_URL ?? DEFAULT_API_URL;
     try {
-      const response = await fetch(`${apiUrl}/health`);
+      const response = await fetch(`${getServerEnv().API_URL}/health`);
       if (!response.ok && response.status !== 503) return null;
       return (await response.json()) as HealthResponse;
     } catch {

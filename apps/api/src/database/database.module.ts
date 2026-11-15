@@ -7,15 +7,13 @@ import {
 } from '@nestjs/common';
 import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import pg from 'pg';
-import { databaseUrl } from './database-url.js';
+import { AppConfigService } from '../config/app-config.module.js';
 
 /** Injection token for the Drizzle database instance. */
 export const DATABASE = Symbol('DATABASE');
 const PG_POOL = Symbol('PG_POOL');
 
 export type Database = NodePgDatabase;
-
-const DEFAULT_POOL_MAX = 10;
 
 const logger = new Logger('Database');
 
@@ -41,10 +39,11 @@ export function createPool(connectionString: string, max: number): pg.Pool {
   providers: [
     {
       provide: PG_POOL,
-      useFactory: () =>
+      inject: [AppConfigService],
+      useFactory: (config: AppConfigService) =>
         createPool(
-          databaseUrl(),
-          Number(process.env.DATABASE_POOL_MAX ?? DEFAULT_POOL_MAX),
+          config.get('DATABASE_URL', { infer: true }),
+          config.get('DATABASE_POOL_MAX', { infer: true }),
         ),
     },
     {

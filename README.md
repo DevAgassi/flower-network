@@ -116,15 +116,52 @@ Build only what changed compared to the default branch (used by CI to deploy app
 pnpm turbo run build --affected
 ```
 
+## Development and production modes
+
+The mode is `NODE_ENV`: `development` (default), `test` (set by Vitest) or `production`.
+
+|                      | Development (`pnpm dev`)                                                 | Production (`pnpm start`)                                        |
+| -------------------- | ------------------------------------------------------------------------ | ---------------------------------------------------------------- |
+| Configuration source | Real environment variables, then `apps/<app>/.env`, then the root `.env` | Real environment variables only; `.env` files are ignored        |
+| Missing variables    | Local defaults that match `compose.yaml`                                 | Required variables must be set, otherwise the app does not start |
+| Code                 | Watch mode (Nest, Vite)                                                  | Built output (`pnpm start` builds first)                         |
+
+Every variable is declared in a zod schema — [apps/api/src/config/env.schema.ts](apps/api/src/config/env.schema.ts) and [apps/web/src/env.server.ts](apps/web/src/env.server.ts). Both apps validate the environment **at startup** and exit with a list of every problem:
+
+```
+Invalid environment configuration:
+  - PORT: Too big: expected number to be <=65535
+  - DATABASE_URL: is required in production
+```
+
+Code never reads `process.env` directly: the API uses `AppConfigService` (`config.get('DATABASE_URL', { infer: true })`), the web server uses `getServerEnv()`. oxlint (`node/no-process-env`) enforces it outside the config files.
+
+Run the production build locally:
+
+```bash
+# bash
+DATABASE_URL=postgres://flower:flower@localhost:5433/flower API_URL=http://localhost:3001 pnpm start
+```
+
+```powershell
+# PowerShell
+$env:DATABASE_URL="postgres://flower:flower@localhost:5433/flower"; $env:API_URL="http://localhost:3001"; pnpm start
+```
+
+`NODE_ENV=production` is set by the `start` scripts; pnpm's `shellEmulator` makes that syntax work on Windows too. Turborepo passes only the variables listed in `turbo.json` → `passThroughEnv` to `dev` and `start`: add new runtime variables there as well.
+
 ## Environment variables
 
-| Variable            | App                    | Default                                                                                         | Purpose                                                 |
-| ------------------- | ---------------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
-| `PORT`              | api                    | `3001`                                                                                          | HTTP port of the API                                    |
-| `DATABASE_URL`      | api                    | `postgres://flower:flower@localhost:5433/flower` outside production; **required** in production | PostgreSQL connection string (also used by drizzle-kit) |
-| `DATABASE_POOL_MAX` | api                    | `10`                                                                                            | Maximum connections in the pool                         |
-| `API_URL`           | web                    | `http://localhost:3001`                                                                         | API base URL used by server functions                   |
-| `PORT`              | web (production build) | `3000`                                                                                          | HTTP port of the built web server                       |
+| Variable            | App                | Default (outside production)                     | Production                    | Purpose                                                 |
+| ------------------- | ------------------ | ------------------------------------------------ | ----------------------------- | ------------------------------------------------------- |
+| `NODE_ENV`          | api, web           | `development`                                    | `production` (set by `start`) | Mode, see above                                         |
+| `PORT`              | api                | `3001`                                           | optional                      | HTTP port of the API                                    |
+| `DATABASE_URL`      | api                | `postgres://flower:flower@localhost:5433/flower` | **required**                  | PostgreSQL connection string (also used by drizzle-kit) |
+| `DATABASE_POOL_MAX` | api                | `10`                                             | optional (1–100)              | Maximum connections in the pool                         |
+| `API_URL`           | web                | `http://localhost:3001`                          | **required**                  | API base URL used by server functions                   |
+| `PORT`              | web (built server) | `3000`                                           | optional                      | HTTP port of the built web server                       |
+
+To add a variable: declare it in the app's schema, add it to `turbo.json` → `passThroughEnv`, document it here and, if it has a local default, in `.env.example`.
 
 ## Roadmap and board
 
