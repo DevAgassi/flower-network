@@ -14,7 +14,25 @@ Architecture details live in [init.md](init.md).
 
 Feature IDs are permanent. Never reuse or renumber an ID; mark dropped features as `dropped` instead.
 
-Status values: `todo` · `wip` · `done` · `blocked`. The `%% status` blocks in the diagrams below are meant to be regenerated automatically from issue states.
+The live status of every issue is the `Status` field on the [Project board](https://github.com/users/DevAgassi/projects/1). The `Status` column of the feature registry below only records `todo`, `done` or `dropped` and is updated in the pull request that finishes the feature. The `%% status` blocks in the diagrams are meant to be regenerated automatically from issue states.
+
+## Board workflow
+
+| Column | Meaning | How an issue gets here |
+|---|---|---|
+| **Backlog** | Not ready: details or decisions are missing, or the issue is still being written | Default for new issues |
+| **Todo** | Ready to start: scope and acceptance are clear | Moved manually after refinement |
+| **In Progress** | Being worked on | Moved manually when work starts |
+| **Blocked** | Started, but stopped by a problem | Moved manually; a comment on the issue says what blocks it and what unblocks it. Returns to In Progress when resolved |
+| **Done** | Merged to `main` | Automatically, when the PR with `Closes #N` is merged |
+| **Deployed on Stage** | Running on the staging environment | Not used yet — enabled together with deployment (PLT-10) |
+| **Deployed on Prod** | Running in production | Not used yet — enabled together with deployment (PLT-10) |
+
+```mermaid
+flowchart LR
+  Backlog --> Todo --> InProgress[In Progress] --> Done --> Stage[Deployed on Stage] --> Prod[Deployed on Prod]
+  InProgress <--> Blocked
+```
 
 ---
 

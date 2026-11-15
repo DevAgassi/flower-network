@@ -2,6 +2,7 @@
   "name": "flower-network",
   "private": true,
   "packageManager": "pnpm@12.21.0",
+  "license": "MIT",
   "engines": {
     "node": ">=24"
   },
@@ -13,7 +14,7 @@
     "test": "turbo run test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "github:sync": "node scripts/github/seed-issues.mjs DevAgassi/flower-network"
+    "github:sync": "gh roadmap sync"
   },
   "devDependencies": {
     "prettier": "^3.4.2",
