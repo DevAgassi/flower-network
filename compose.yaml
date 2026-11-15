@@ -1,0 +1,153 @@
+# Local development infrastructure.
+# Ports are bound to 127.0.0.1 only; credentials come from .env (see .env.example)
+# and default to development values that must never be used outside localhost.
+
+name: flower-network
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-flower}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-flower}
+      POSTGRES_DB: ${POSTGRES_DB:-flower}
+    ports:
+      # 5433 on the host so it does not clash with other local PostgreSQL instances.
+      - '127.0.0.1:${POSTGRES_PORT:-5433}:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        ['CMD-SHELL', 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  # Web UI for PostgreSQL. Runs in desktop mode (no pgAdmin login) and registers
+  # the database on first start with a pgpass file, so no password is ever asked.
+  # Safe only because the port is bound to 127.0.0.1.
+  pgadmin:
+    image: dpage/pgadmin4:9.19
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+      PGADMIN_SERVER_JSON_FILE: /tmp/servers.json
+      POSTGRES_USER: ${POSTGRES_USER:-flower}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-flower}
+      POSTGRES_DB: ${POSTGRES_DB:-flower}
+    entrypoint: ['/bin/sh', '-c']
+    command:
+      - >
+        printf 'postgres:5432:*:%s:%s\n' "$$POSTGRES_USER" "$$POSTGRES_PASSWORD" > /tmp/pgpass &&
+        chmod 600 /tmp/pgpass &&
+        printf '{"Servers":{"1":{"Name":"flower-network","Group":"Servers","Host":"postgres","Port":5432,"MaintenanceDB":"%s","Username":"%s","PassFile":"/tmp/pgpass","SSLMode":"prefer"}}}' "$$POSTGRES_DB" "$$POSTGRES_USER" > /tmp/servers.json &&
+        exec /entrypoint.sh
+    ports:
+      - '127.0.0.1:${PGADMIN_PORT:-5051}:80'
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    restart: unless-stopped
+
+  redis:
+    image: redis:8.8-alpine
+    # BullMQ requires noeviction; AOF keeps queued jobs across restarts.
+    command:
+      [
+        'redis-server',
+        '--appendonly',
+        'yes',
+        '--maxmemory-policy',
+        'noeviction',
+      ]
+    ports:
+      - '127.0.0.1:${REDIS_PORT:-6379}:6379'
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  # S3-compatible object storage (replaces MinIO, see ADR-11 in init.md).
+  s3:
+    image: rustfs/rustfs:1.0.5
+    environment:
+      RUSTFS_VOLUMES: /data
+      RUSTFS_ADDRESS: 0.0.0.0:9000
+      RUSTFS_CONSOLE_ADDRESS: 0.0.0.0:9001
+      RUSTFS_CONSOLE_ENABLE: 'true'
+      RUSTFS_ACCESS_KEY: ${S3_ACCESS_KEY:-flower}
+      RUSTFS_SECRET_KEY: ${S3_SECRET_KEY:-flower-secret}
+    ports:
+      - '127.0.0.1:${S3_PORT:-9000}:9000'
+      - '127.0.0.1:${S3_CONSOLE_PORT:-9001}:9001'
+    volumes:
+      - s3-data:/data
+    healthcheck:
+      test: ['CMD', 'curl', '-fsS', 'http://127.0.0.1:9000/health']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  # One-off job: creates the media bucket if it does not exist.
+  s3-init:
+    image: amazon/aws-cli:2.40.3
+    depends_on:
+      s3:
+        condition: service_healthy
+    environment:
+      AWS_ACCESS_KEY_ID: ${S3_ACCESS_KEY:-flower}
+      AWS_SECRET_ACCESS_KEY: ${S3_SECRET_KEY:-flower-secret}
+      AWS_DEFAULT_REGION: us-east-1
+      S3_BUCKET: ${S3_BUCKET:-flower-media}
+    entrypoint: ['sh', '-c']
+    command:
+      - >
+        aws --endpoint-url http://s3:9000 s3api head-bucket --bucket "$$S3_BUCKET" 2>/dev/null
+        || aws --endpoint-url http://s3:9000 s3 mb "s3://$$S3_BUCKET"
+    restart: 'no'
+
+  prometheus:
+    image: prom/prometheus:v3.16.0
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    ports:
+      - '127.0.0.1:${PROMETHEUS_PORT:-9090}:9090'
+    volumes:
+      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:13.2.6
+    depends_on:
+      - prometheus
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+    ports:
+      - '127.0.0.1:${GRAFANA_PORT:-3030}:3000'
+    volumes:
+      - ./infra/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana-data:/var/lib/grafana
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+  pgadmin-data:
+  redis-data:
+  s3-data:
+  prometheus-data:
+  grafana-data:

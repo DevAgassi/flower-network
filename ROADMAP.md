@@ -183,9 +183,9 @@ The `Issue` column is filled in once the issue is created.
 
 | ID | Epic | Feature | Depends on | Status | Issue |
 |---|---|---|---|---|---|
-| PLT-01 | E_PLT_S1 | `docker-compose`: PostgreSQL 17, Redis, MinIO, Prometheus, Grafana | — | todo | [#23](https://github.com/DevAgassi/flower-network/issues/23) |
+| PLT-01 | E_PLT_S1 | `docker-compose`: PostgreSQL 17, pgAdmin, Redis, RustFS (S3), Prometheus, Grafana | — | done | [#23](https://github.com/DevAgassi/flower-network/issues/23) |
 | PLT-02 | E_PLT_S1 | Monorepo: NestJS app, TanStack Start app, shared types package | — | done | [#24](https://github.com/DevAgassi/flower-network/issues/24) |
-| PLT-03 | E_PLT_S1 | ADR-1: choose ORM; migrations pipeline | PLT-02 | todo | [#25](https://github.com/DevAgassi/flower-network/issues/25) |
+| PLT-03 | E_PLT_S1 | Drizzle (ADR-1): `DatabaseModule`, drizzle-kit migrations pipeline | PLT-02 | done | [#25](https://github.com/DevAgassi/flower-network/issues/25) |
 | PLT-04 | E_PLT_S1 | Transactional Outbox, relay worker (BullMQ), `processed_events` | PLT-03 | todo | [#26](https://github.com/DevAgassi/flower-network/issues/26) |
 | PLT-05 | E_PLT_S1 | Structured logging (`pino`), OpenTelemetry tracing, metrics endpoint | PLT-02 | todo | [#27](https://github.com/DevAgassi/flower-network/issues/27) |
 | PLT-06 | E_PLT_S1 | OpenAPI generation and typed frontend client | PLT-02 | todo | [#28](https://github.com/DevAgassi/flower-network/issues/28) |
@@ -203,7 +203,7 @@ The `Issue` column is filled in once the issue is created.
 | CAT-02 | E_CAT_S2 | Taxonomies (multiple trees: category, occasion) and taxons on `ltree` | CAT-01 | todo | [#35](https://github.com/DevAgassi/flower-network/issues/35) |
 | CAT-03 | E_CAT_S2 | Option types / attributes | CAT-01 | todo | [#36](https://github.com/DevAgassi/flower-network/issues/36) |
 | CAT-04 | E_CAT_S2 | Prices (UAH, kopecks) | CAT-01 | todo | [#37](https://github.com/DevAgassi/flower-network/issues/37) |
-| CAT-05 | E_CAT_S2 | Media upload to MinIO | CAT-01, PLT-01 | todo | [#38](https://github.com/DevAgassi/flower-network/issues/38) |
+| CAT-05 | E_CAT_S2 | Media upload to S3 storage | CAT-01, PLT-01 | todo | [#38](https://github.com/DevAgassi/flower-network/issues/38) |
 | CAT-06 | E_CAT_S2 | Bouquet composition (`variant_components`, `kit_type`) | CAT-01 | todo | [#39](https://github.com/DevAgassi/flower-network/issues/39) |
 | PRC-01 | E_PRC_S2 | Suppliers | PLT-03 | todo | [#40](https://github.com/DevAgassi/flower-network/issues/40) |
 | PRC-02 | E_PRC_S2 | Goods receipts with unit cost → `receipt` movement + batch | PRC-01, INV-01, INV-02 | todo | [#43](https://github.com/DevAgassi/flower-network/issues/43) |
