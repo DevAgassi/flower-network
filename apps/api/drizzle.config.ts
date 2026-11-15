@@ -1,10 +1,8 @@
 import { defineConfig } from 'drizzle-kit';
-import { loadEnvFiles } from './src/config/env-files.js';
-import { parseEnv } from './src/config/env.schema.js';
+import { loadEnv } from './src/config/env-files.js';
 
 // Same rules as the app: .env only outside production, validated by the schema.
-loadEnvFiles();
-const env = parseEnv(process.env);
+const env = loadEnv();
 
 export default defineConfig({
   dialect: 'postgresql',

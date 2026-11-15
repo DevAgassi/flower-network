@@ -25,7 +25,7 @@ describe('Health (e2e)', () => {
     expect(response.body).toMatchObject({
       status: 'ok',
       service: 'api',
-      checks: { database: 'up' },
+      checks: { database: 'up', outbox: 'up' },
     });
   });
 

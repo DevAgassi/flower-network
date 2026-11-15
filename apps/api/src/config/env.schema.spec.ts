@@ -7,6 +7,7 @@ describe('parseEnv', () => {
       PORT: 3001,
       DATABASE_URL: DEVELOPMENT_DATABASE_URL,
       DATABASE_POOL_MAX: 10,
+      OUTBOX_RELAY: 'on',
     });
   });
 
@@ -16,6 +17,7 @@ describe('parseEnv', () => {
       PORT: '8080',
       DATABASE_URL: 'postgresql://app:secret@db:5432/flower',
       DATABASE_POOL_MAX: '25',
+      OUTBOX_RELAY: 'off',
       UNRELATED: 'ignored',
     });
     expect(env).toEqual({
@@ -23,6 +25,7 @@ describe('parseEnv', () => {
       PORT: 8080,
       DATABASE_URL: 'postgresql://app:secret@db:5432/flower',
       DATABASE_POOL_MAX: 25,
+      OUTBOX_RELAY: 'off',
     });
   });
 
@@ -46,11 +49,12 @@ describe('parseEnv', () => {
         PORT: '99999',
         DATABASE_URL: 'mysql://db/flower',
         DATABASE_POOL_MAX: 'many',
+        OUTBOX_RELAY: 'maybe',
       }),
     ).toThrow(
       expect.objectContaining({
         message: expect.stringMatching(
-          /NODE_ENV[\s\S]*PORT[\s\S]*DATABASE_URL[\s\S]*DATABASE_POOL_MAX/,
+          /NODE_ENV[\s\S]*PORT[\s\S]*DATABASE_URL[\s\S]*DATABASE_POOL_MAX[\s\S]*OUTBOX_RELAY/,
         ),
       }),
     );
