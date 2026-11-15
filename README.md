@@ -19,8 +19,7 @@ apps/
 packages/
   shared/                 Types and contracts shared between apps (@flower/shared)
   typescript-config/      Shared tsconfig presets (@flower/typescript-config)
-scripts/
-  github/seed-issues.mjs  Syncs ROADMAP.md to GitHub issues and the Project board
+roadmap.config.json       Settings for gh roadmap (modules, Project title)
 ```
 
 Every app is built and deployed independently. Shared code lives in `packages/*` and is consumed through each package's `exports` field only.
@@ -44,15 +43,15 @@ pnpm dev
 
 All commands run from the repository root through Turborepo. Turborepo builds dependencies first (`^build`) and caches results.
 
-| Command                             | What it does                                                                                    |
-| ----------------------------------- | ----------------------------------------------------------------------------------------------- |
-| `pnpm dev`                          | Runs all apps in watch mode                                                                     |
-| `pnpm build`                        | Builds all packages and apps                                                                    |
-| `pnpm typecheck`                    | Type-checks every package                                                                       |
-| `pnpm lint`                         | Lints with oxlint                                                                               |
-| `pnpm test`                         | Runs unit tests (Vitest)                                                                        |
-| `pnpm format` / `pnpm format:check` | Formats / checks formatting with Prettier                                                       |
-| `pnpm github:sync`                  | Syncs ROADMAP.md to GitHub issues and the Project (needs `gh` with `repo` and `project` scopes) |
+| Command                             | What it does                                                                 |
+| ----------------------------------- | ---------------------------------------------------------------------------- |
+| `pnpm dev`                          | Runs all apps in watch mode                                                  |
+| `pnpm build`                        | Builds all packages and apps                                                 |
+| `pnpm typecheck`                    | Type-checks every package                                                    |
+| `pnpm lint`                         | Lints with oxlint                                                            |
+| `pnpm test`                         | Runs unit tests (Vitest)                                                     |
+| `pnpm format` / `pnpm format:check` | Formats / checks formatting with Prettier                                    |
+| `pnpm github:sync`                  | Shortcut for `gh roadmap sync` — see [Roadmap and board](#roadmap-and-board) |
 
 Run a task for one package only:
 
@@ -74,6 +73,26 @@ pnpm turbo run build --affected
 | `PORT`    | api                    | `3001`                  | HTTP port of the API                  |
 | `API_URL` | web                    | `http://localhost:3001` | API base URL used by server functions |
 | `PORT`    | web (production build) | `3000`                  | HTTP port of the built web server     |
+
+## Roadmap and board
+
+The plan lives in [ROADMAP.md](ROADMAP.md); the [Project board](https://github.com/users/DevAgassi/projects/1) is generated from it by the [`gh roadmap`](https://github.com/DevAgassi/gh-roadmap) CLI extension, configured in [roadmap.config.json](roadmap.config.json).
+
+One-time setup:
+
+```bash
+gh auth refresh -s project
+gh extension install DevAgassi/gh-roadmap
+```
+
+After changing ROADMAP.md (new feature, new title, new dependency):
+
+```bash
+gh roadmap sync --dry-run   # validate
+gh roadmap sync             # create/update issues, sub-issues, dependencies and board cards
+```
+
+Statuses set on the board are never overwritten; new issues start in **Backlog**. The meaning of each board column is described in [ROADMAP.md](ROADMAP.md#board-workflow).
 
 ## Conventions
 

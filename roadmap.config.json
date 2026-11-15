@@ -1,0 +1,27 @@
+{
+  "repo": "DevAgassi/flower-network",
+  "roadmap": "ROADMAP.md",
+  "project": {
+    "title": "Flower Network"
+  },
+  "modules": {
+    "PLT": { "name": "platform", "color": "6b7280" },
+    "IAM": { "name": "identity", "color": "7c3aed" },
+    "LOC": { "name": "locations", "color": "0891b2" },
+    "CAT": { "name": "catalog", "color": "2563eb" },
+    "PRC": { "name": "procurement", "color": "0d9488" },
+    "INV": { "name": "inventory", "color": "16a34a" },
+    "ADM": { "name": "admin-ui", "color": "4b5563" },
+    "STF": { "name": "storefront", "color": "db2777" },
+    "CRT": { "name": "cart", "color": "ea580c" },
+    "PRI": { "name": "pricing", "color": "f59e0b" },
+    "ORD": { "name": "orders", "color": "dc2626" },
+    "PAY": { "name": "payments", "color": "ca8a04" },
+    "FUL": { "name": "fulfillment", "color": "9333ea" },
+    "NTF": { "name": "notifications", "color": "0284c7" },
+    "POS": { "name": "pos", "color": "be123c" },
+    "FSC": { "name": "fiscal", "color": "78716c" },
+    "ANL": { "name": "analytics", "color": "4f46e5" }
+  },
+  "links": [{ "label": "init.md", "path": "init.md" }]
+}

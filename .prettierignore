@@ -7,6 +7,6 @@ dist
 coverage
 apps/web/src/routeTree.gen.ts
 
-# Parsed by scripts/github/seed-issues.mjs; table alignment would break parsing
+# Parsed by gh roadmap; table alignment would break parsing
 ROADMAP.md
 init.md
