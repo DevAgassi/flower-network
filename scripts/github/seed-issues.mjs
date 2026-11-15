@@ -610,8 +610,9 @@ function ensureProject(allIssues) {
       ).addProjectV2ItemById.item.id;
       item = { id };
     }
+    // New issues start in Backlog: they are not ready until scope and acceptance are written.
     const desired = {
-      Status: 'Todo',
+      Status: 'Backlog',
       Module: MODULES[module].name,
       Level: type,
     };
