@@ -1,14 +1,20 @@
-import { Controller, Get, Inject, Res } from '@nestjs/common';
+import { Controller, Get, HttpStatus, Inject, Res } from '@nestjs/common';
 import { OutboxRelay } from '@nestjs/outbox';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { sql } from 'drizzle-orm';
 import type { Response } from 'express';
-import type { HealthCheckStatus, HealthResponse } from '@flower/shared';
 import { DATABASE, type Database } from '../database/database.module.js';
+import {
+  type HealthCheckStatus,
+  type HealthResponse,
+  healthResponseSchema,
+} from './health.contract.js';
 
 /**
  * Liveness and dependency checks. Returns 503 with the same body when any
  * check is down, so load balancers and orchestrators can react.
  */
+@ApiTags('health')
 @Controller('health')
 export class HealthController {
   constructor(
@@ -17,6 +23,17 @@ export class HealthController {
   ) {}
 
   @Get()
+  @ApiOperation({ summary: 'Liveness and dependency checks' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Every check is up',
+    standardSchema: healthResponseSchema,
+  })
+  @ApiResponse({
+    status: HttpStatus.SERVICE_UNAVAILABLE,
+    description: 'At least one check is down; same body',
+    standardSchema: healthResponseSchema,
+  })
   async check(
     @Res({ passthrough: true }) res: Response,
   ): Promise<HealthResponse> {

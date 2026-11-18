@@ -20,6 +20,7 @@
     "infra:logs": "docker compose logs -f",
     "db:migrate": "pnpm --filter @flower/api db:migrate",
     "db:studio": "pnpm --filter @flower/api db:studio",
+    "api:generate": "pnpm --filter @flower/api openapi && pnpm --filter @flower/api-client generate",
     "github:sync": "gh roadmap sync"
   },
   "devDependencies": {

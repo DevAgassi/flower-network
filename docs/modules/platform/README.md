@@ -19,6 +19,7 @@ Roadmap: PLT-01…PLT-12 in [ROADMAP.md](../../../ROADMAP.md) · Spec: [init.md 
 | Configuration         | [`apps/api/src/config/`](../../../apps/api/src/config/), [`apps/web/src/env.server.ts`](../../../apps/web/src/env.server.ts)        | [Configuration](configuration.md)                |
 | Database              | [`apps/api/src/database/`](../../../apps/api/src/database/), [`apps/api/drizzle/`](../../../apps/api/drizzle/)                      | [Database](database.md)                          |
 | Outbox                | [`apps/api/src/outbox/`](../../../apps/api/src/outbox/)                                                                             | [Outbox](outbox.md)                              |
+| API contract          | [`apps/api/src/openapi/`](../../../apps/api/src/openapi/), [`packages/api-client/`](../../../packages/api-client/)                  | [API contract](api-contract.md)                  |
 | Logs, traces, metrics | [`apps/api/src/observability/`](../../../apps/api/src/observability/)                                                               | [Observability](observability.md)                |
 | Local infrastructure  | [`compose.yaml`](../../../compose.yaml), [`infra/`](../../../infra/)                                                                | [Local infrastructure](local-infrastructure.md)  |
 | Health check          | [`apps/api/src/health/`](../../../apps/api/src/health/)                                                                             | [API and worker](../../apps/api.md#health-check) |

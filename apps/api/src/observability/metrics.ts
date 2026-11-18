@@ -13,6 +13,7 @@ import {
   Res,
 } from '@nestjs/common';
 import { OutboxEvents, OutboxRelay } from '@nestjs/outbox';
+import { ApiExcludeController } from '@nestjs/swagger';
 import {
   collectDefaultMetrics,
   Counter,
@@ -215,7 +216,8 @@ export class OutboxMetrics implements OnModuleInit, OnModuleDestroy {
   }
 }
 
-/** GET /metrics on the API, in the Prometheus text format. */
+/** GET /metrics on the API, in the Prometheus text format. Not part of the API contract. */
+@ApiExcludeController()
 @Controller('metrics')
 export class MetricsController {
   constructor(private readonly registry: Registry) {}

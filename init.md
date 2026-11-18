@@ -57,8 +57,8 @@
 * **Монорепозиторій (ADR-10):** pnpm 12 workspaces + Turborepo 2. Застосунки — `apps/api` (NestJS 12, ESM), `apps/web` (TanStack Start); спільний код — `packages/*` (`@flower/shared`, `@flower/typescript-config`). Структура описана в [docs/modules/platform/monorepo.md](docs/modules/platform/monorepo.md).
 * **Конфігурація та режими:** `NODE_ENV` (`development` / `test` / `production`); змінні середовища валідуються zod-схемою при старті (api — `@nestjs/config` + zod, web — zod у Nitro-плагіні). Development читає `.env`, production — лише реальні змінні (12-factor). `pnpm dev` — режим розробки, `pnpm start` — зібрані застосунки в production-режимі.
 * **Контракт API:**
-  * OpenAPI-схема генерується з NestJS (`@nestjs/swagger`).
-  * Типізований клієнт для фронтенду генерується зі схеми (наприклад, `openapi-typescript` / `orval`) і лежить у спільному пакеті монорепозиторію.
+  * Запити й відповіді описуються zod-схемами (NestJS 12 Standard Schema: `@Body({ schema })`, глобальний `StandardSchemaValidationPipe`); OpenAPI-схема генерується з NestJS (`@nestjs/swagger` 12) у закомічений `apps/api/openapi.json` (`pnpm api:generate`).
+  * Типізований клієнт для фронтенду генерується зі схеми (`openapi-typescript` + `openapi-fetch`) і лежить у пакеті `@flower/api-client`.
 * **Бази даних та інфраструктура (Docker Compose):**
   * **PostgreSQL 17** — основна реляційна БД.
   * **Redis** — кеш каталогу, сесії, брокер для BullMQ.

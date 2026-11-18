@@ -19,7 +19,8 @@ apps/
   api/                    NestJS backend: HTTP API and worker, port 3001
   web/                    TanStack Start frontend (storefront, /admin, /pos), port 3000
 packages/
-  shared/                 Types and contracts shared between apps (@flower/shared)
+  api-client/             Typed API client generated from the OpenAPI document (@flower/api-client)
+  shared/                 Non-HTTP code shared between apps (@flower/shared)
   typescript-config/      Shared tsconfig presets (@flower/typescript-config)
 infra/                    Config for local infrastructure (Prometheus, Grafana)
 docs/                     Project documentation
@@ -45,7 +46,7 @@ pnpm dev
 ```
 
 - Web: http://localhost:3000 — the home page shows the API and database status
-- API: http://localhost:3001/health — `200` when all checks are up, `503` otherwise
+- API: http://localhost:3001/health — `200` when all checks are up, `503` otherwise; API docs at http://localhost:3001/docs
 
 | Local service       | Address                              | Login                      |
 | ------------------- | ------------------------------------ | -------------------------- |
@@ -63,19 +64,20 @@ Details and commands: [Local infrastructure](docs/modules/platform/local-infrast
 
 All commands run from the repository root through Turborepo.
 
-| Command                              | What it does                                      |
-| ------------------------------------ | ------------------------------------------------- |
-| `pnpm dev`                           | Runs all apps in watch mode                       |
-| `pnpm build`                         | Builds all packages and apps                      |
-| `pnpm start`                         | Builds and runs all apps in production mode       |
-| `pnpm typecheck`                     | Type-checks every package                         |
-| `pnpm lint`                          | Lints with oxlint                                 |
-| `pnpm test`                          | Runs unit tests (Vitest)                          |
-| `pnpm --filter @flower/api test:e2e` | Runs e2e tests against the local database         |
-| `pnpm format` / `pnpm format:check`  | Formats / checks formatting with Prettier         |
-| `pnpm infra:up` / `infra:down`       | Starts / stops local infrastructure               |
-| `pnpm db:migrate` / `db:studio`      | Applies migrations / opens Drizzle Studio         |
-| `pnpm github:sync`                   | Syncs ROADMAP.md to the board (`gh roadmap sync`) |
+| Command                              | What it does                                              |
+| ------------------------------------ | --------------------------------------------------------- |
+| `pnpm dev`                           | Runs all apps in watch mode                               |
+| `pnpm build`                         | Builds all packages and apps                              |
+| `pnpm start`                         | Builds and runs all apps in production mode               |
+| `pnpm typecheck`                     | Type-checks every package                                 |
+| `pnpm lint`                          | Lints with oxlint                                         |
+| `pnpm test`                          | Runs unit tests (Vitest)                                  |
+| `pnpm --filter @flower/api test:e2e` | Runs e2e tests against the local database                 |
+| `pnpm format` / `pnpm format:check`  | Formats / checks formatting with Prettier                 |
+| `pnpm infra:up` / `infra:down`       | Starts / stops local infrastructure                       |
+| `pnpm db:migrate` / `db:studio`      | Applies migrations / opens Drizzle Studio                 |
+| `pnpm api:generate`                  | Regenerates the OpenAPI document and the typed API client |
+| `pnpm github:sync`                   | Syncs ROADMAP.md to the board (`gh roadmap sync`)         |
 
 ## Where things are explained
 
@@ -84,6 +86,7 @@ All commands run from the repository root through Turborepo.
 | Environment variables, development/production | [Configuration](docs/modules/platform/configuration.md)                                           |
 | Drizzle, schemas, migrations                  | [Database](docs/modules/platform/database.md)                                                     |
 | Events between modules                        | [Outbox](docs/modules/platform/outbox.md)                                                         |
+| HTTP API contract, typed client               | [API contract](docs/modules/platform/api-contract.md)                                             |
 | Logs, traces, metrics                         | [Observability](docs/modules/platform/observability.md)                                           |
 | API, worker, health check                     | [API and worker](docs/apps/api.md)                                                                |
 | Frontend                                      | [Web](docs/apps/web.md)                                                                           |

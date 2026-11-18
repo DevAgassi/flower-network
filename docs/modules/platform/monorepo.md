@@ -16,7 +16,8 @@ apps/
   api/                    NestJS 12 backend: HTTP API (src/main.ts) and worker (src/worker.ts), port 3001
   web/                    TanStack Start frontend: storefront, /admin, /pos; port 3000
 packages/
-  shared/                 Types and contracts shared between apps (@flower/shared)
+  api-client/             Typed API client generated from apps/api/openapi.json (@flower/api-client)
+  shared/                 Non-HTTP code shared between apps (@flower/shared; empty for now)
   typescript-config/      Shared tsconfig presets (@flower/typescript-config)
 infra/                    Config for local infrastructure (Prometheus, Grafana)
 docs/                     Project documentation
