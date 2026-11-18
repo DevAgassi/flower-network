@@ -9,6 +9,14 @@ audience: [developer]
 
 Problems with tooling, the board and the workflow. Newest first. Entries are not rewritten later.
 
+### Commits pushed to a pull request that was already merged
+
+- **When:** 2026-11-15 · #97
+- **Symptom:** two follow-up commits (PLT-13, PLT-14 tracking) were pushed to the branch of #97, but `main` never got them.
+- **Cause:** #97 had been merged a few minutes earlier; GitHub does not add later pushes to a merged pull request.
+- **Fix:** the commits were cherry-picked onto `main` in #100.
+- **Lesson:** before pushing more work to a branch, check its pull request is still open (`gh pr view <n> --json state`); if it is merged, open a new pull request from `main`.
+
 ### Work started before the issue description was published
 
 - **When:** 2026-11-15 · PLT-05 (#27)
