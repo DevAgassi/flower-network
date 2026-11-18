@@ -29,6 +29,7 @@ pnpm --filter @flower/api test:e2e     # real PostgreSQL, needs infra:up
 pnpm build
 pnpm --filter @flower/api db:generate  # migration from *.schema.ts changes
 pnpm --filter @flower/api db:check
+pnpm api:generate                      # after changing a controller/contract: openapi.json + client types (commit both)
 gh roadmap sync --dry-run              # after editing ROADMAP.md; without --dry-run it writes to GitHub
 ```
 
@@ -43,12 +44,15 @@ apps/api/src/
   database/               DatabaseModule (DATABASE token, Transaction type), schema.ts registry
   outbox/                 AppOutboxModule (@nestjs/outbox, schema nest_outbox), inbox retention
   observability/          OpenTelemetry tracing, pino logging, Prometheus metrics (GET /metrics)
+  openapi/                OpenAPI builder, /docs (dev only), generator
   health/                 GET /health (database, outbox)
   <module>/               business modules, from Stage 2
 apps/api/test/            e2e tests
 apps/api/drizzle/         SQL migrations (generated)
+apps/api/openapi.json     API contract (generated)
 apps/web/src/             TanStack Start: routes/, env.server.ts, server-plugins/
-packages/shared/          @flower/shared — types shared by api and web
+packages/api-client/      @flower/api-client — typed client generated from openapi.json
+packages/shared/          @flower/shared — non-HTTP code shared by api and web
 docs/                     documentation (rules: docs/README.md)
 ```
 
@@ -58,6 +62,7 @@ docs/                     documentation (rules: docs/README.md)
 - **ESM:** relative imports in `apps/api` end in `.js`; no `__dirname`. Tests use Vitest (`vi.fn()`).
 - **Config:** never read `process.env`; use `AppConfigService.get(key, { infer: true })` (api) or `getServerEnv()` (web). A new variable: schema + `turbo.json` `passThroughEnv` + [configuration doc](docs/modules/platform/configuration.md).
 - **Database:** inject `@Inject(DATABASE) db: Database`. Module tables in `src/<module>/<module>.schema.ts`, re-exported from `src/database/schema.ts`. Modules never import each other's tables. Never edit a migration on `main`.
+- **HTTP contract:** every endpoint's body/params/query and responses are zod schemas in `<module>.contract.ts`: `@Body({ schema })`, `@ApiResponse({ status, standardSchema })`, schemas named with `.meta({ id })`. The web calls the API only through `@flower/api-client`. Details: [API contract](docs/modules/platform/api-contract.md).
 - **Events:** only through the outbox — `outbox.add(tx, { topic, key, payload })` inside the `db.transaction()` of the change. Handlers: `@OnOutboxMessage(topic, { consumer })` with a permanent consumer name, idempotent, writes via `ctx.processInTransaction(tx, …)`.
 - **Domain:** multi-location (`location_id`) and variant-level (`variant_id`); stock changes in a transaction with a `stock_movements` record; money `bigint` kopecks; time `timestamptz` UTC. Full list: init.md §8.
 - **Shared code:** in `packages/*`, imported only through the package's `exports`.

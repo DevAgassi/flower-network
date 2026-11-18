@@ -14,7 +14,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@flower/shared": "workspace:*",
+    "@flower/api-client": "workspace:*",
     "@tailwindcss/vite": "^4.1.18",
     "@tanstack/react-devtools": "0.10.14",
     "@tanstack/react-query": "5.107.1",

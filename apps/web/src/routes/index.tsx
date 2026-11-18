@@ -1,19 +1,21 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { createServerFn } from '@tanstack/react-start';
-import type { HealthResponse } from '@flower/shared';
+import { type ApiSchemas, createApiClient } from '@flower/api-client';
 import { getServerEnv } from '#/env.server';
+
+type HealthResponse = ApiSchemas['HealthResponse'];
 
 /**
  * Runs on the server only, so the API URL never reaches the browser bundle.
  * Returns null when the API is unreachable. A 503 still carries a health body
- * (some dependency is down), so it is returned as is.
+ * (some dependency is down): the typed client returns it as `error`.
  */
 const getApiHealth = createServerFn({ method: 'GET' }).handler(
   async (): Promise<HealthResponse | null> => {
     try {
-      const response = await fetch(`${getServerEnv().API_URL}/health`);
-      if (!response.ok && response.status !== 503) return null;
-      return (await response.json()) as HealthResponse;
+      const api = createApiClient(getServerEnv().API_URL);
+      const { data, error } = await api.GET('/health');
+      return data ?? error ?? null;
     } catch {
       return null;
     }

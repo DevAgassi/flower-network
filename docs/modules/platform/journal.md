@@ -9,6 +9,30 @@ audience: [developer]
 
 Problems we hit, why they happened and how we solved them. Newest first. Entries are not rewritten when the code changes later.
 
+### Tests could not find `tslib` after adding and removing packages
+
+- **When:** 2026-11-18 · PLT-06 (#28)
+- **Symptom:** every Nest test failed with `Cannot find package 'tslib' imported from …/@nestjs/common/…`; `pnpm install` said "Already up to date".
+- **Cause:** after several `pnpm add` / `pnpm remove` runs the link `@nestjs/common → tslib@2.9.1` pointed to a store folder that no longer existed; the lockfile was correct, so a normal install saw nothing to do.
+- **Fix:** `pnpm install --force` relinked every package.
+- **Lesson:** "Cannot find package X" for a package that is in `pnpm-lock.yaml` means broken links, not a missing dependency — run `pnpm install --force` before changing anything.
+
+### `nestjs-zod` does not support NestJS 12
+
+- **When:** 2026-11-18 · PLT-06 (#28)
+- **Symptom:** the usual way to use zod DTOs in Nest, `nestjs-zod` 5.6, declares `@nestjs/common ^10 || ^11` and `@nestjs/swagger` up to 11.
+- **Cause:** NestJS 12 added the same capability itself: Standard Schema validation (`@Body({ schema })`, `StandardSchemaValidationPipe`) and Standard Schema → OpenAPI in `@nestjs/swagger` 12.
+- **Fix:** zod schemas are used through the built-in Standard Schema support; no extra package ([API contract](api-contract.md)).
+- **Lesson:** before adding an adapter library after a major framework upgrade, check whether the framework now does it natively.
+
+### Two install-time warnings from the contract tooling
+
+- **When:** 2026-11-18 · PLT-06 (#28)
+- **Symptom:** `pnpm add @nestjs/swagger` failed with "Ignored build scripts: @scarf/scarf"; `openapi-typescript` reported an unmet peer `typescript ^5.x`.
+- **Cause:** `@scarf/scarf` (pulled in by `swagger-ui-dist`) is a download-analytics install script; `openapi-typescript` 7.13 has not widened its peer range to TypeScript 6.
+- **Fix:** `'@scarf/scarf': false` in `allowBuilds`; `peerDependencyRules.allowedVersions` allows TypeScript 6 for `openapi-typescript` after checking that it generates identical output with 6.0.2 ([pnpm-workspace.yaml](../../../pnpm-workspace.yaml)).
+- **Lesson:** decide on every blocked install script explicitly; widen a peer range only after verifying the tool works, and note when to remove the rule.
+
 ### No NestJS spans in traces
 
 - **When:** 2026-11-15 · PLT-05 (#27)

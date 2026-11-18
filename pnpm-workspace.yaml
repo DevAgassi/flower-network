@@ -6,6 +6,14 @@ packages:
 allowBuilds:
   esbuild: true
   lightningcss: true
+  # Download analytics pulled in by swagger-ui-dist; not needed to work.
+  '@scarf/scarf': false
 
 # Cross-platform script shell, so `NODE_ENV=production node ...` works on Windows too.
 shellEmulator: true
+
+# openapi-typescript 7.13 declares typescript ^5 but works with 6 (verified in
+# PLT-06: identical output). Remove when its peer range includes 6.
+peerDependencyRules:
+  allowedVersions:
+    openapi-typescript>typescript: '6'
