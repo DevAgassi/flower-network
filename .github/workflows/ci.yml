@@ -1,0 +1,111 @@
+# Checks every pull request and every push to main. Both jobs are required
+# before a pull request can be merged (branch rule on main). Locally the same
+# checks are listed in docs/process/ci.md.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# A newer push to the same branch or pull request cancels the older run.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: '24' # minimum supported version (package.json → engines)
+
+jobs:
+  checks:
+    name: checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      # pnpm from package.json → packageManager, Node.js, `pnpm install` with a cached store.
+      - uses: pnpm/setup@v3
+        with:
+          runtime: node@${{ env.NODE_VERSION }}
+          cache: true
+
+      - name: Format
+        run: pnpm format:check
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Unit tests
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+
+      - name: Docs (links, frontmatter)
+        run: pnpm docs:check
+
+      - name: Roadmap is valid
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh extension install DevAgassi/gh-roadmap
+          gh roadmap sync --dry-run
+
+  database:
+    name: database
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: flower
+          POSTGRES_PASSWORD: flower
+          POSTGRES_DB: flower
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U flower -d flower"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://flower:flower@localhost:5432/flower
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/setup@v3
+        with:
+          runtime: node@${{ env.NODE_VERSION }}
+          cache: true
+
+      - name: Migrations apply to an empty database
+        run: pnpm db:migrate
+
+      - name: E2E tests
+        run: pnpm --filter @flower/api test:e2e
+
+      - name: No schema change without a migration
+        run: |
+          pnpm --filter @flower/api db:check
+          pnpm --filter @flower/api db:generate
+          git add --all --intent-to-add
+          git diff --exit-code --stat || {
+            echo "::error::A *.schema.ts change has no migration. Run 'pnpm --filter @flower/api db:generate' and commit the result."
+            exit 1
+          }
+
+      - name: API contract is up to date
+        run: |
+          pnpm api:generate
+          git diff --exit-code --stat || {
+            echo "::error::openapi.json or the API client is out of date. Run 'pnpm api:generate' and commit the result."
+            exit 1
+          }

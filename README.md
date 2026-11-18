@@ -1,5 +1,7 @@
 # Flower Network
 
+[![CI](https://github.com/DevAgassi/flower-network/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/DevAgassi/flower-network/actions/workflows/ci.yml)
+
 Omnichannel e-commerce platform for a city network of flower shops: online storefront with per-store availability, buy-online-pick-up-in-store, courier delivery, florist POS, multi-location inventory and owner analytics.
 
 Built as a modular monolith (NestJS) with a TanStack Start frontend, in a pnpm + Turborepo monorepo.
@@ -74,6 +76,7 @@ All commands run from the repository root through Turborepo.
 | `pnpm test`                          | Runs unit tests (Vitest)                                  |
 | `pnpm --filter @flower/api test:e2e` | Runs e2e tests against the local database                 |
 | `pnpm format` / `pnpm format:check`  | Formats / checks formatting with Prettier                 |
+| `pnpm docs:check`                    | Checks links and frontmatter in the documentation         |
 | `pnpm infra:up` / `infra:down`       | Starts / stops local infrastructure                       |
 | `pnpm db:migrate` / `db:studio`      | Applies migrations / opens Drizzle Studio                 |
 | `pnpm api:generate`                  | Regenerates the OpenAPI document and the typed API client |
@@ -91,6 +94,7 @@ All commands run from the repository root through Turborepo.
 | API, worker, health check                     | [API and worker](docs/apps/api.md)                                                                |
 | Frontend                                      | [Web](docs/apps/web.md)                                                                           |
 | Issues, branches, pull requests, board        | [Workflow](docs/process/workflow.md)                                                              |
+| Continuous integration                        | [CI](docs/process/ci.md)                                                                          |
 | Problems we solved and their lessons          | [Platform journal](docs/modules/platform/journal.md) · [Process journal](docs/process/journal.md) |
 
 ## License

@@ -9,6 +9,22 @@ audience: [developer]
 
 Problems with tooling, the board and the workflow. Newest first. Entries are not rewritten later.
 
+### `git push` hung when the branch contained a workflow file
+
+- **When:** 2026-11-18 · PLT-07 (#29)
+- **Symptom:** `git push` of the branch with `.github/workflows/ci.yml` hung until the timeout; earlier pushes sometimes hung too.
+- **Cause:** git authenticates through Git Credential Manager, whose stored token lacks the `workflow` scope that pushing workflow files requires; GCM then waits for an interactive sign-in that never appears in a non-interactive shell. The `gh` token has the scope.
+- **Fix:** that push used the `gh` token once: `git -c credential.helper= -c "credential.helper=!gh auth git-credential" push`.
+- **Lesson:** a hanging `git push` is usually an authentication prompt. For a permanent fix sign in to GCM again with the `workflow` scope, or run `gh auth setup-git` so git uses the `gh` token.
+
+### A failing check was hidden by a pipe
+
+- **When:** 2026-11-18 · PLT-06 (#101)
+- **Symptom:** `pnpm format:check | tail -1 && git commit …` committed an unformatted file.
+- **Cause:** a pipeline returns the exit code of its last command — `tail` succeeded, so `&&` continued.
+- **Fix:** a follow-up commit formatted the file; CI (PLT-07, #29) now runs every check on a clean machine.
+- **Lesson:** never pipe a check into `tail`/`grep` when its result decides the next step; run it plainly or use `set -o pipefail`.
+
 ### Commits pushed to a pull request that was already merged
 
 - **When:** 2026-11-15 · #97

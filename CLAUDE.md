@@ -13,6 +13,7 @@ Flower Network — omnichannel e-commerce for a city network of flower shops. Mo
 | How a module or piece works, its past problems  | [docs/modules/\<module\>/](docs/README.md) — `README.md`, `journal.md` |
 | Processes (API, worker, web)                    | [docs/apps/](docs/apps/)                                               |
 | Issue → branch → PR → merge                     | [docs/process/workflow.md](docs/process/workflow.md)                   |
+| What CI checks and how to run it locally        | [docs/process/ci.md](docs/process/ci.md)                               |
 
 Before working on a module, read its `docs/modules/<module>/` folder, including the journal.
 
@@ -24,7 +25,7 @@ pnpm infra:up                          # Docker: PostgreSQL :5433, pgAdmin :5051
 pnpm db:migrate                        # Drizzle migrations + outbox schema
 pnpm dev                               # api :3001 (with outbox relay) + web :3000
 
-pnpm format:check && pnpm lint && pnpm typecheck && pnpm test
+pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm docs:check
 pnpm --filter @flower/api test:e2e     # real PostgreSQL, needs infra:up
 pnpm build
 pnpm --filter @flower/api db:generate  # migration from *.schema.ts changes
@@ -73,7 +74,7 @@ docs/                     documentation (rules: docs/README.md)
 
 1. Before starting a feature, rewrite its GitHub issue in detail (why, how, decision, tasks, out of scope, acceptance, glossary) — [#26](https://github.com/DevAgassi/flower-network/issues/26) is the reference.
 2. Branch `feat/<feature-id>-<slug>` from `main`; commit subject `PLT-04: …`.
-3. One PR per feature with `Closes #N`; the same PR sets the feature to `done` in ROADMAP.md and updates `docs/`.
+3. One PR per feature with `Closes #N`; the same PR sets the feature to `done` in ROADMAP.md and updates `docs/`. CI (`checks`, `database`) must be green before merge — [docs/process/ci.md](docs/process/ci.md). Never hide a command's exit code (`cmd | tail` returns tail's status).
 4. Board columns are moved by the owner by hand; do not bulk-edit the board.
 5. Stacked PRs: merge one at a time, retarget to `main` before deleting a base branch, never in a loop.
 
