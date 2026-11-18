@@ -12,7 +12,7 @@ export const healthResponseSchema = z
     status: z.enum(['ok', 'error']),
     service: z
       .string()
-      .meta({ description: 'App that answered the check', example: 'api' }),
+      .meta({ description: 'App that answered', example: 'api' }),
     timestamp: z.iso.datetime().meta({ description: 'Time of the response' }),
     checks: z.record(z.string(), healthCheckStatusSchema).meta({
       description: 'Dependency checks by name',
