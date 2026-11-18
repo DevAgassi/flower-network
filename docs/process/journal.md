@@ -9,6 +9,14 @@ audience: [developer]
 
 Problems with tooling, the board and the workflow. Newest first. Entries are not rewritten later.
 
+### A failing check was hidden by a pipe
+
+- **When:** 2026-11-18 · PLT-06 (#101)
+- **Symptom:** `pnpm format:check | tail -1 && git commit …` committed an unformatted file.
+- **Cause:** a pipeline returns the exit code of its last command — `tail` succeeded, so `&&` continued.
+- **Fix:** a follow-up commit formatted the file; CI (PLT-07, #29) now runs every check on a clean machine.
+- **Lesson:** never pipe a check into `tail`/`grep` when its result decides the next step; run it plainly or use `set -o pipefail`.
+
 ### Commits pushed to a pull request that was already merged
 
 - **When:** 2026-11-15 · #97
