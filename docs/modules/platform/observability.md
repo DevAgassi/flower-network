@@ -101,7 +101,7 @@ Label values must come from a small fixed set (location codes, topics) — never
 
 ### Grafana dashboard
 
-**API overview** ([infra/grafana/dashboards/api-overview.json](../../../infra/grafana/dashboards/api-overview.json)), provisioned read-only: API up, outbox pending / dead letters / lag, requests per second by route, 5xx share, latency p50/p95/p99 by route, outbox throughput, event-loop lag, memory. To change it: edit in Grafana, export the JSON, replace the file.
+**API overview** ([infra/grafana/dashboards/api-overview.json](../../../infra/grafana/dashboards/api-overview.json)), provisioned read-only: API up, outbox pending / dead letters / lag, requests per second by route, 5xx share, latency p50/p95/p99 by route, outbox throughput, event-loop lag, memory. To change it: edit in Grafana, export the JSON, replace the file, then `docker compose restart grafana` — on Windows, Grafana does not notice changes in the mounted folder by itself.
 
 ## Rules
 
