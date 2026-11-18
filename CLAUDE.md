@@ -79,4 +79,5 @@ In the same PR as the code ([details](docs/README.md#when-to-write-what)):
 - changed behaviour → update the module's reference doc;
 - new staff screen or procedure → a guide per role in `docs/modules/<module>/guides/`;
 - non-obvious problem solved → entry in the module's `journal.md` (symptom, cause, fix, lesson);
+- implementation departs from [init.md](init.md) (a decision or design changed) → update `init.md` too; it stays the spec until PLT-14 ([#99](https://github.com/DevAgassi/flower-network/issues/99)) migrates it into `docs/`;
 - the repository is public: no secrets or personal data in docs.

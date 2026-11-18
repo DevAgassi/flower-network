@@ -264,3 +264,5 @@ The `Issue` column is filled in once the issue is created.
 | INV-08 | E_INV_S4 | Nightly ledger reconciliation job | INV-01 | todo | [#79](https://github.com/DevAgassi/flower-network/issues/79) |
 | PLT-09 | E_PLT_S4 | k6 load tests incl. concurrent POS + online sale of the last item; cart storage benchmark (PostgreSQL vs Redis) | POS-01, ORD-03 | todo | [#80](https://github.com/DevAgassi/flower-network/issues/80) |
 | PLT-10 | E_PLT_S4 | ADR-7: deployment target, PostgreSQL backups | — | todo | [#81](https://github.com/DevAgassi/flower-network/issues/81) |
+| PLT-13 | E_PLT_S4 | NestJS spans: add `@opentelemetry/instrumentation-nestjs-core` once it supports Nest 12 (blocked upstream) | PLT-05 | todo | [#98](https://github.com/DevAgassi/flower-network/issues/98) |
+| PLT-14 | E_PLT_S4 | Retire `init.md`: migrate spec, rules and ADRs into `docs/` and `CLAUDE.md`, then delete it | — | todo | [#99](https://github.com/DevAgassi/flower-network/issues/99) |
