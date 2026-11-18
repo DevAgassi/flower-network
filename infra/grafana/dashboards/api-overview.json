@@ -1,9 +1,7 @@
 {
   "uid": "flower-api-overview",
   "title": "API overview",
-  "tags": [
-    "flower-network"
-  ],
+  "tags": ["flower-network"],
   "timezone": "browser",
   "schemaVersion": 39,
   "version": 1,
@@ -48,9 +46,7 @@
       },
       "options": {
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ]
+          "calcs": ["lastNotNull"]
         },
         "colorMode": "background"
       },
@@ -100,9 +96,7 @@
       },
       "options": {
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ]
+          "calcs": ["lastNotNull"]
         },
         "colorMode": "background"
       },
@@ -152,9 +146,7 @@
       },
       "options": {
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ]
+          "calcs": ["lastNotNull"]
         },
         "colorMode": "background"
       },
@@ -204,9 +196,7 @@
       },
       "options": {
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ]
+          "calcs": ["lastNotNull"]
         },
         "colorMode": "background"
       },
