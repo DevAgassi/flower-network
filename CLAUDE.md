@@ -14,6 +14,7 @@ Flower Network — omnichannel e-commerce for a city network of flower shops. Mo
 | Processes (API, worker, web)                    | [docs/apps/](docs/apps/)                                               |
 | Issue → branch → PR → merge                     | [docs/process/workflow.md](docs/process/workflow.md)                   |
 | What CI checks and how to run it locally        | [docs/process/ci.md](docs/process/ci.md)                               |
+| Subagents for routine subtasks (cheaper models) | [docs/process/agents.md](docs/process/agents.md)                       |
 
 Before working on a module, read its `docs/modules/<module>/` folder, including the journal.
 
