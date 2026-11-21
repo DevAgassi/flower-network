@@ -11,15 +11,15 @@ Everything the apps need locally runs in Docker, defined in [compose.yaml](../..
 
 ## Services
 
-| Service             | URL / address                                                                     | Login                                                                                  | Used by                                        |
-| ------------------- | --------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | ---------------------------------------------- |
-| PostgreSQL 17       | `localhost:5433`, database `flower`                                               | `flower` / `flower`                                                                    | API: all data, outbox                          |
-| pgAdmin 9           | http://localhost:5051                                                             | none — opens directly, the database is already connected                               | Developers                                     |
-| Redis 8             | `localhost:6379`                                                                  | —                                                                                      | Sessions (IAM-01), delayed jobs (later)        |
-| S3 storage (RustFS) | API `http://localhost:9000`, console http://localhost:9001, bucket `flower-media` | `flower` / `flower-secret`                                                             | Product media (CAT-05)                         |
-| Prometheus 3        | http://localhost:9090                                                             | —                                                                                      | Metrics: scrapes API :3001 and worker :9464    |
-| Grafana 13          | http://localhost:3030                                                             | `admin` / `admin`, Prometheus data source and the API overview dashboard preconfigured | Dashboards ([Observability](observability.md)) |
-| Jaeger 2            | UI http://localhost:16686, OTLP/HTTP `localhost:4318`                             | —                                                                                      | Traces ([Observability](observability.md))     |
+| Service             | URL / address                                                                     | Login                                                                                  | Used by                                                    |
+| ------------------- | --------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| PostgreSQL 17       | `localhost:5433`, database `flower`                                               | `flower` / `flower`                                                                    | API: all data, outbox                                      |
+| pgAdmin 9           | http://localhost:5051                                                             | none — opens directly, the database is already connected                               | Developers                                                 |
+| Redis 8             | `localhost:6379`                                                                  | —                                                                                      | Sessions and login limits (identity), delayed jobs (later) |
+| S3 storage (RustFS) | API `http://localhost:9000`, console http://localhost:9001, bucket `flower-media` | `flower` / `flower-secret`                                                             | Product media (CAT-05)                                     |
+| Prometheus 3        | http://localhost:9090                                                             | —                                                                                      | Metrics: scrapes API :3001 and worker :9464                |
+| Grafana 13          | http://localhost:3030                                                             | `admin` / `admin`, Prometheus data source and the API overview dashboard preconfigured | Dashboards ([Observability](observability.md))             |
+| Jaeger 2            | UI http://localhost:16686, OTLP/HTTP `localhost:4318`                             | —                                                                                      | Traces ([Observability](observability.md))                 |
 
 ## Commands
 

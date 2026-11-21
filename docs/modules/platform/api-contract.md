@@ -91,6 +91,10 @@ flowchart LR
 - **Operation ids** are `<Controller>_<method>` (`Health_check`).
 - **Docs UI.** Outside production the API serves Swagger UI at http://localhost:3001/docs and the JSON at `/docs/openapi.json`. `/metrics` is excluded from the contract.
 
+## Authentication in the contract
+
+Every route requires a session unless marked `@Public()` ([Sign-in and sessions](../identity/sessions.md#protecting-routes)). Protected operations carry `@ApiBearerAuth()`, so `openapi.json` shows the bearer requirement and the client passes the token. Errors use the shared `ApiError` schema ([`errors.contract.ts`](../../../apps/api/src/openapi/errors.contract.ts)): `@ApiResponse({ status: HttpStatus.UNAUTHORIZED, standardSchema: apiErrorSchema })`.
+
 ## Rules
 
 - Every endpoint has zod schemas for its body / params / query and its responses; no untyped `@Body() body: any`.

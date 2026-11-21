@@ -3,7 +3,10 @@ import { OutboxRelay } from '@nestjs/outbox';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { sql } from 'drizzle-orm';
 import type { Response } from 'express';
+import type { Redis } from 'ioredis';
 import { DATABASE, type Database } from '../database/database.module.js';
+import { Public } from '../identity/auth.decorators.js';
+import { REDIS } from '../redis/redis.module.js';
 import {
   type HealthCheckStatus,
   type HealthResponse,
@@ -14,12 +17,14 @@ import {
  * Liveness and dependency checks. Returns 503 with the same body when any
  * check is down, so load balancers and orchestrators can react.
  */
+@Public()
 @ApiTags('health')
 @Controller('health')
 export class HealthController {
   constructor(
     @Inject(DATABASE) private readonly db: Database,
     private readonly outboxRelay: OutboxRelay,
+    @Inject(REDIS) private readonly redis: Redis,
   ) {}
 
   @Get()
@@ -37,12 +42,13 @@ export class HealthController {
   async check(
     @Res({ passthrough: true }) res: Response,
   ): Promise<HealthResponse> {
-    const [database, outbox] = await Promise.all([
+    const [database, outbox, redis] = await Promise.all([
       this.probe(() => this.db.execute(sql`select 1`)),
       // Reads the outbox tables: fails when the store or its schema is unusable.
       this.probe(() => this.outboxRelay.stats()),
+      this.probe(() => this.redis.ping()),
     ]);
-    const checks = { database, outbox };
+    const checks = { database, outbox, redis };
     const healthy = Object.values(checks).every((c) => c === 'up');
     res.status(healthy ? 200 : 503);
     return {

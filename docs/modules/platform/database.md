@@ -32,6 +32,15 @@ await this.db.transaction(async (tx: Transaction) => {
 2. Re-export them from [`src/database/schema.ts`](../../../apps/api/src/database/schema.ts) — drizzle-kit reads only this file.
 3. A module never imports another module's tables; it uses that module's service or reacts to its events.
 
+## Conventions
+
+- **Primary keys:** `uuid` columns holding **UUIDv7**, generated in the app: `uuid('id').primaryKey().$defaultFn(() => uuidv7())` (`uuid` package). Time-ordered like a sequence (index-friendly), reveal no row counts, and can be generated before the insert. First used by `users`.
+- **Names:** tables and columns in `snake_case`, set explicitly in the schema (`varchar('password_hash')`); TypeScript properties in `camelCase`.
+- **Time:** `timestamp(…, { withTimezone: true })`; `created_at` with `defaultNow()`, `updated_at` with `defaultNow()` and `$onUpdate(() => new Date())`.
+- **Integration metadata:** `public_metadata` / `private_metadata` `jsonb not null default '{}'` on key tables (init.md §4.1).
+- **Fixed value sets:** `pgEnum` (adding a value is a new migration with `ALTER TYPE … ADD VALUE`).
+- **Invariants the database can check** (lowercase email, non-negative stock) get a `check()` constraint, not only application code.
+
 ## Migration workflow
 
 Change a `*.schema.ts` → `db:generate` → review the generated SQL → `db:migrate` → commit the schema and the migration together.

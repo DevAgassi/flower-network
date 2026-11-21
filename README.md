@@ -44,6 +44,7 @@ Every app is built and deployed independently. Shared code lives in `packages/*`
 pnpm install
 pnpm infra:up     # start local infrastructure and wait until it is healthy
 pnpm db:migrate   # apply database migrations
+pnpm --filter @flower/api user:create --email you@example.com --name "Your Name"   # first staff user
 pnpm dev
 ```
 
