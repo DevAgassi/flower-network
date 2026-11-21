@@ -176,6 +176,87 @@ export interface paths {
         patch: operations["Locations_update"];
         trace?: never;
     };
+    "/products": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Products, newest first, one page at a time */
+        get: operations["Products_list"];
+        put?: never;
+        /**
+         * Create a product with its master variant
+         * @description Starts as `draft` unless another status is given.
+         */
+        post: operations["Products_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/products/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One product with its variants */
+        get: operations["Products_get"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete a product and its variants (soft delete)
+         * @description Hidden from the catalog; orders and stock history keep pointing at it. Its slug and SKUs become free.
+         */
+        delete: operations["Products_remove"];
+        options?: never;
+        head?: never;
+        /** Change a product */
+        patch: operations["Products_update"];
+        trace?: never;
+    };
+    "/products/{id}/variants": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add a variant to a product */
+        post: operations["Products_addVariant"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/products/{id}/variants/{variantId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete a variant (soft delete)
+         * @description The master variant is deleted only with its product.
+         */
+        delete: operations["Products_removeVariant"];
+        options?: never;
+        head?: never;
+        /** Change a variant */
+        patch: operations["Products_updateVariant"];
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -241,7 +322,7 @@ export interface components {
          */
         StaffRole: "owner" | "admin" | "florist" | "courier";
         /** @enum {string} */
-        Permission: "staff:read" | "staff:manage" | "locations:manage";
+        Permission: "staff:read" | "staff:manage" | "locations:manage" | "catalog:manage";
         ApiError: {
             /** @example 401 */
             statusCode: number;
@@ -355,6 +436,131 @@ export interface components {
             phone?: string | null;
             /** @description Replaces the whole week */
             hours?: components["schemas"]["OpeningHours"][];
+        };
+        /**
+         * @description `draft` is being prepared and not shown to customers
+         * @enum {string}
+         */
+        ProductStatus: "draft" | "active";
+        ProductPage: {
+            items: components["schemas"]["Product"][];
+            /**
+             * Format: uuid
+             * @description Pass as `cursor` to get the next page; null on the last
+             */
+            nextCursor: string | null;
+        };
+        Product: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            slug: string;
+            description: string | null;
+            status: components["schemas"]["ProductStatus"];
+            /** @description Data for the storefront and integrations */
+            publicMetadata: {
+                [key: string]: unknown;
+            };
+            /** @description Internal data, never shown to customers */
+            privateMetadata: {
+                [key: string]: unknown;
+            };
+            /** @description Master first, then by position */
+            variants: components["schemas"]["Variant"][];
+            /** @description What can be sold: the non-master variants, or the master when there are none */
+            sellableVariantIds: string[];
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        Variant: {
+            /** Format: uuid */
+            id: string;
+            sku: string;
+            isMaster: boolean;
+            position: number;
+            /** @description Data for the storefront and integrations */
+            publicMetadata: {
+                [key: string]: unknown;
+            };
+            /** @description Internal data, never shown to customers */
+            privateMetadata: {
+                [key: string]: unknown;
+            };
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        CreateProductRequest: {
+            name: string;
+            /** @example ecuador-rose */
+            slug: string;
+            description?: string;
+            /** @default draft */
+            status: components["schemas"]["ProductStatus"];
+            /**
+             * @description SKU of the master variant
+             * @example ROSE-ECU-60
+             */
+            sku: string;
+            /** @description Data for the storefront and integrations */
+            publicMetadata?: {
+                [key: string]: unknown;
+            };
+            /** @description Internal data, never shown to customers */
+            privateMetadata?: {
+                [key: string]: unknown;
+            };
+        };
+        UpdateProductRequest: {
+            name?: string;
+            /** @example ecuador-rose */
+            slug?: string;
+            description?: string | null;
+            status?: components["schemas"]["ProductStatus"];
+            /** @description Data for the storefront and integrations */
+            publicMetadata?: {
+                [key: string]: unknown;
+            };
+            /** @description Internal data, never shown to customers */
+            privateMetadata?: {
+                [key: string]: unknown;
+            };
+        };
+        CreateVariantRequest: {
+            /**
+             * @description Stored uppercase
+             * @example ROSE-ECU-60
+             */
+            sku: string;
+            /** @default 0 */
+            position: number;
+            /** @description Data for the storefront and integrations */
+            publicMetadata?: {
+                [key: string]: unknown;
+            };
+            /** @description Internal data, never shown to customers */
+            privateMetadata?: {
+                [key: string]: unknown;
+            };
+        };
+        UpdateVariantRequest: {
+            /**
+             * @description Stored uppercase
+             * @example ROSE-ECU-60
+             */
+            sku?: string;
+            position?: number;
+            /** @description Data for the storefront and integrations */
+            publicMetadata?: {
+                [key: string]: unknown;
+            };
+            /** @description Internal data, never shown to customers */
+            privateMetadata?: {
+                [key: string]: unknown;
+            };
         };
     };
     responses: never;
@@ -961,6 +1167,461 @@ export interface operations {
                 };
             };
             /** @description Name already taken */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    Products_list: {
+        parameters: {
+            query?: {
+                /** @description Page size, 1–200 (default 50) */
+                limit?: number;
+                /** @description `nextCursor` of the previous page */
+                cursor?: string;
+                status?: "draft" | "active";
+                /** @description Search in product names and SKUs */
+                q?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductPage"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    Products_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateProductRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Product"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Requires the `catalog:manage` permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Slug or SKU already used */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    Products_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Product"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    Products_remove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Requires the `catalog:manage` permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    Products_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateProductRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Product"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Requires the `catalog:manage` permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Slug already used */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    Products_addVariant: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateVariantRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Variant"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Requires the `catalog:manage` permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description SKU already used */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    Products_removeVariant: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                variantId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Master variant, or invalid id */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Requires the `catalog:manage` permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    Products_updateVariant: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                variantId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateVariantRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Variant"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Requires the `catalog:manage` permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description SKU already used */
             409: {
                 headers: {
                     [name: string]: unknown;

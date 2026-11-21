@@ -49,6 +49,7 @@ apps/api/src/
   redis/                  RedisModule: REDIS token (ioredis)
   identity/               staff users, login, Redis sessions, roles/permissions, /staff, global AuthGuard
   locations/              stores and warehouses, opening hours; LocationsService for other modules
+  catalog/                products and variants (master variant, soft delete); CatalogService
   observability/          OpenTelemetry tracing, pino logging, Prometheus metrics (GET /metrics)
   openapi/                OpenAPI builder, /docs (dev only), generator
   health/                 GET /health (database, outbox)
@@ -69,7 +70,7 @@ docs/                     documentation (rules: docs/README.md)
 - **Config:** never read `process.env`; use `AppConfigService.get(key, { infer: true })` (api) or `getServerEnv()` (web). A new variable: schema + `turbo.json` `passThroughEnv` + [configuration doc](docs/modules/platform/configuration.md).
 - **Database:** inject `@Inject(DATABASE) db: Database`. Primary keys are UUIDv7 (`$defaultFn(() => uuidv7())`). Module tables in `src/<module>/<module>.schema.ts`, re-exported from `src/database/schema.ts`. Modules never query each other's tables (importing one only to declare a foreign key is allowed). Never edit a migration on `main`.
 - **Auth:** every route requires `Authorization: Bearer <session token>` (global `AuthGuard`); open a route only with `@Public()`. Protected operations get `@ApiBearerAuth()`; the current user comes from `@CurrentUser()`. Routes require **permissions, not roles**: `@RequirePermission('area:action')` (matrix in `identity/permissions.ts`); anything owned by a location is checked with `assertLocationAccess(user, locationId)`. Never log tokens or passwords. Details: [sessions](docs/modules/identity/sessions.md), [roles](docs/modules/identity/roles.md).
-- **HTTP contract:** every endpoint's body/params/query and responses are zod schemas in `<module>.contract.ts`: `@Body({ schema })`, `@ApiResponse({ status, standardSchema })`, schemas named with `.meta({ id })`. The web calls the API only through `@flower/api-client`. Details: [API contract](docs/modules/platform/api-contract.md).
+- **HTTP contract:** every endpoint's body/params/query and responses are zod schemas in `<module>.contract.ts`: `@Body({ schema })`, `@ApiResponse({ status, standardSchema })`, schemas named with `.meta({ id })`; every query parameter also gets `@ApiQuery`. Lists that can grow use cursor pagination (`paginationQuery`, `toPage`, `pageSchema`). The web calls the API only through `@flower/api-client`. Details: [API contract](docs/modules/platform/api-contract.md).
 - **Events:** only through the outbox — `outbox.add(tx, { topic, key, payload })` inside the `db.transaction()` of the change. Handlers: `@OnOutboxMessage(topic, { consumer })` with a permanent consumer name, idempotent, writes via `ctx.processInTransaction(tx, …)`.
 - **Domain:** multi-location (`location_id`) and variant-level (`variant_id`); stock changes in a transaction with a `stock_movements` record; money `bigint` kopecks; time `timestamptz` UTC. Full list: init.md §8.
 - **Shared code:** in `packages/*`, imported only through the package's `exports`.
@@ -81,7 +82,7 @@ docs/                     documentation (rules: docs/README.md)
 1. Before starting a feature, rewrite its GitHub issue in detail (why, how, decision, tasks, out of scope, acceptance, glossary) — [#26](https://github.com/DevAgassi/flower-network/issues/26) is the reference.
 2. Branch `feat/<feature-id>-<slug>` from `main`; commit subject `PLT-04: …`.
 3. One PR per feature with `Closes #N`; the same PR sets the feature to `done` in ROADMAP.md and updates `docs/`. CI (`checks`, `database`) must be green before merge — [docs/process/ci.md](docs/process/ci.md). Never hide a command's exit code (`cmd | tail` returns tail's status).
-4. Board columns are moved by the owner by hand; do not bulk-edit the board.
+4. Board, per issue: the assistant moves the issue it starts (and its epic) to **In Progress**, implements, reports and waits for the owner's review; only on the owner's "commit and push" it commits, pushes, opens the PR and moves the issue to **Done** (later **Deployed on Prod**). Routine board/issue chores can go to the `github-ops` subagent. Never bulk-edit the board.
 5. Stacked PRs: merge one at a time, retarget to `main` before deleting a base branch, never in a loop.
 
 ## Documentation duty

@@ -1,6 +1,7 @@
 import { Module, StandardSchemaValidationPipe } from '@nestjs/common';
 import { APP_PIPE } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
+import { CatalogModule } from './catalog/catalog.module.js';
 import { AppConfigModule } from './config/app-config.module.js';
 import { DatabaseModule } from './database/database.module.js';
 import { HealthModule } from './health/health.module.js';
@@ -21,6 +22,7 @@ import { RedisModule } from './redis/redis.module.js';
     HealthModule,
     IdentityModule,
     LocationsModule,
+    CatalogModule,
   ],
   providers: [
     // Validates every parameter declared with a zod schema, e.g.

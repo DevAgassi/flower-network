@@ -29,6 +29,7 @@ Defined in one place, [`permissions.ts`](../../../apps/api/src/identity/permissi
 | `staff:read`       | ✓     | ✓                              | –       | –       |
 | `staff:manage`     | ✓     | ✓ (florists and couriers only) | –       | –       |
 | `locations:manage` | ✓     | ✓                              | –       | –       |
+| `catalog:manage`   | ✓     | ✓                              | –       | –       |
 
 The owner always has every permission.
 

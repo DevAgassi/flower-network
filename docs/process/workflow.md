@@ -38,7 +38,7 @@ gh roadmap sync             # create/update issues, sub-issues, dependencies and
 
 - Feature IDs are permanent; dropped features are marked `dropped`, never deleted or renumbered.
 - Statuses set on the board are never overwritten by the sync; new issues start in **Backlog**.
-- Board columns are described in [ROADMAP.md → Board workflow](../../ROADMAP.md#board-workflow). Columns are moved by hand; only **Done** is automatic (PR with `Closes #N` merged).
+- Board columns are described in [ROADMAP.md → Board workflow](../../ROADMAP.md#board-workflow). The assistant moves the issue it starts (and its epic) to **In Progress**, and to **Done** when the owner says "commit and push" (PR opened with `Closes #N`); once production exists, to **Deployed on Prod** instead. Nothing is committed before the owner has reviewed the result. Other columns are moved by the owner.
 
 ## 2. Refine the issue before starting
 
