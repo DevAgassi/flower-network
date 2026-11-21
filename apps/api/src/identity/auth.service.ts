@@ -47,7 +47,11 @@ export class AuthService {
     await this.limiter.reset(normalized);
     const session = await this.sessions.create(user.id);
     await this.users.recordLogin(user.id);
-    return { ...session, user: toAuthenticatedUser(user) };
+    const member = await this.users.findMember(user.id);
+    return {
+      ...session,
+      user: toAuthenticatedUser(user, member?.locationIds ?? []),
+    };
   }
 
   async logout(token: string): Promise<void> {

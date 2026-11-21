@@ -195,7 +195,7 @@ The `Issue` column is filled in once the issue is created.
 | PLT-11 | E_PLT_S1 | Environment configuration: zod-validated env, development / production modes, `pnpm start` | PLT-02 | done | [#91](https://github.com/DevAgassi/flower-network/issues/91) |
 | PLT-12 | E_PLT_S1 | Project documentation: `docs/` per module and service (reference, journal, role guides), `CLAUDE.md` | PLT-02 | done | [#94](https://github.com/DevAgassi/flower-network/issues/94) |
 | IAM-01 | E_IAM_S1 | Staff users, authentication, sessions in Redis | PLT-03 | done | [#31](https://github.com/DevAgassi/flower-network/issues/31) |
-| IAM-02 | E_IAM_S1 | Roles & permissions (owner, admin, florist, courier), `staff_locations` | IAM-01 | todo | [#32](https://github.com/DevAgassi/flower-network/issues/32) |
+| IAM-02 | E_IAM_S1 | Roles & permissions (owner, admin, florist, courier), `staff_locations` | IAM-01 | done | [#32](https://github.com/DevAgassi/flower-network/issues/32) |
 
 ### Stage 2 · Catalog, Inventory, Procurement
 

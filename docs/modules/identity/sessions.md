@@ -11,11 +11,11 @@ Staff sign in with email and password and get an opaque session token. Every req
 
 ## API
 
-| Endpoint                                 | Auth    | Response                                              |
-| ---------------------------------------- | ------- | ----------------------------------------------------- |
-| `POST /auth/login` `{ email, password }` | public  | `201 { token, expiresAt, user }`; `400`, `401`, `429` |
-| `POST /auth/logout`                      | session | `204`                                                 |
-| `GET /auth/me`                           | session | `200 { id, email, name }`; `401`                      |
+| Endpoint                                 | Auth    | Response                                                       |
+| ---------------------------------------- | ------- | -------------------------------------------------------------- |
+| `POST /auth/login` `{ email, password }` | public  | `201 { token, expiresAt, user }`; `400`, `401`, `429`          |
+| `POST /auth/logout`                      | session | `204`                                                          |
+| `GET /auth/me`                           | session | `200 { id, email, name, role, permissions, locations }`; `401` |
 
 ```ts
 import { createApiClient } from '@flower/api-client';
@@ -48,11 +48,11 @@ me(@CurrentUser() user: AuthenticatedUser) { … }   // the signed-in user
 - Public today: `GET /health`, `GET /metrics`, `POST /auth/login`, and `/docs` (served outside Nest's router).
 - The guard also rejects a valid session whose user is disabled or deleted.
 - `openapi.spec.ts` fails when an operation has no bearer requirement and is not in its list of public operations — a forgotten `@ApiBearerAuth()` is caught by CI.
-- Permissions per role come with IAM-02; until then every signed-in staff user can call every protected route.
+- A route can also require a permission: `@RequirePermission('staff:manage')` → `403` for other roles. See [Roles, permissions and locations](roles.md).
 
 ## Users
 
-Table `users` (module `identity`): `id` (UUIDv7), `email` (unique, stored lowercased — a check constraint enforces it), `name`, `password_hash`, `status` (`active` / `disabled`), `public_metadata` / `private_metadata` (`jsonb`, init.md §4.1), `last_login_at`, `created_at`, `updated_at`. All access goes through `UsersService`.
+Table `users` (module `identity`): `id` (UUIDv7), `email` (unique, stored lowercased — a check constraint enforces it), `name`, `password_hash`, `role` ([roles](roles.md)), `status` (`active` / `disabled`), `public_metadata` / `private_metadata` (`jsonb`, init.md §4.1), `last_login_at`, `created_at`, `updated_at`. All access goes through `UsersService`.
 
 ## Passwords
 
@@ -76,11 +76,11 @@ Why not Argon2id: `crypto.argon2` exists since Node 24.7 but is still experiment
 
 ## Creating users
 
-Until the admin screens exist (ADM-01):
+The first owner is made from the command line; after that the owner and admins manage staff through [`/staff`](roles.md#staff-api) (screens in ADM-01):
 
 ```bash
-pnpm --filter @flower/api user:create --email owner@example.com --name "Owner Name"
-# Created owner@example.com (01a1fe79-…).
+pnpm --filter @flower/api user:create --email owner@example.com --name "Owner Name" --role owner
+# Created owner owner@example.com (01a1fe79-…).
 # Password (shown once): …
 ```
 
