@@ -49,7 +49,7 @@ apps/api/src/
   redis/                  RedisModule: REDIS token (ioredis)
   identity/               staff users, login, Redis sessions, roles/permissions, /staff, global AuthGuard
   locations/              stores and warehouses, opening hours; LocationsService for other modules
-  catalog/                products and variants (master variant, soft delete); CatalogService
+  catalog/                products and variants (master, soft delete), taxonomies on ltree; CatalogService
   observability/          OpenTelemetry tracing, pino logging, Prometheus metrics (GET /metrics)
   openapi/                OpenAPI builder, /docs (dev only), generator
   health/                 GET /health (database, outbox)

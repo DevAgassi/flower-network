@@ -219,6 +219,26 @@ export interface paths {
         patch: operations["Products_update"];
         trace?: never;
     };
+    "/products/{id}/taxons": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Replace the product's taxons
+         * @description Any taxonomies; new links go last inside each taxon.
+         */
+        put: operations["Products_setTaxons"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/products/{id}/variants": {
         parameters: {
             query?: never;
@@ -255,6 +275,90 @@ export interface paths {
         head?: never;
         /** Change a variant */
         patch: operations["Products_updateVariant"];
+        trace?: never;
+    };
+    "/taxonomies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** All taxonomies (Category, Occasion, …) */
+        get: operations["Taxonomies_list"];
+        put?: never;
+        /** Create a taxonomy */
+        post: operations["Taxonomies_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/taxonomies/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete a taxonomy with all its taxons (soft delete)
+         * @description Products are unlinked from the deleted taxons.
+         */
+        delete: operations["Taxonomies_remove"];
+        options?: never;
+        head?: never;
+        /** Change a taxonomy */
+        patch: operations["Taxonomies_update"];
+        trace?: never;
+    };
+    "/taxonomies/{id}/taxons": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The whole tree of a taxonomy
+         * @description Flat list in depth-first order: each parent before its children, siblings by position.
+         */
+        get: operations["Taxonomies_tree"];
+        put?: never;
+        /** Add a taxon (top level or under a parent) */
+        post: operations["Taxonomies_createTaxon"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/taxons/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete a taxon with its subtree (soft delete)
+         * @description Products are unlinked from the deleted taxons.
+         */
+        delete: operations["Taxons_remove"];
+        options?: never;
+        head?: never;
+        /**
+         * Rename, move or reorder a taxon
+         * @description A new slug or parent rewrites the paths of the whole subtree. Moving into its own subtree is rejected.
+         */
+        patch: operations["Taxons_update"];
         trace?: never;
     };
 }
@@ -467,6 +571,8 @@ export interface components {
             };
             /** @description Master first, then by position */
             variants: components["schemas"]["Variant"][];
+            /** @description Taxons the product is in, across all taxonomies */
+            taxonIds: string[];
             /** @description What can be sold: the non-master variants, or the master when there are none */
             sellableVariantIds: string[];
             /** Format: date-time */
@@ -529,6 +635,10 @@ export interface components {
                 [key: string]: unknown;
             };
         };
+        SetProductTaxonsRequest: {
+            /** @description Replaces the product's taxons (any taxonomies) */
+            taxonIds: string[];
+        };
         CreateVariantRequest: {
             /**
              * @description Stored uppercase
@@ -561,6 +671,68 @@ export interface components {
             privateMetadata?: {
                 [key: string]: unknown;
             };
+        };
+        /** @description An independent tree of categories */
+        Taxonomy: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            slug: string;
+            position: number;
+        };
+        CreateTaxonomyRequest: {
+            name: string;
+            /** @example roses */
+            slug: string;
+            /** @default 0 */
+            position: number;
+        };
+        UpdateTaxonomyRequest: {
+            name?: string;
+            /** @example roses */
+            slug?: string;
+            position?: number;
+        };
+        Taxon: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            taxonomyId: string;
+            /** Format: uuid */
+            parentId: string | null;
+            name: string;
+            slug: string;
+            /**
+             * @description Slugs from the top, dot-separated
+             * @example flowers.roses.ecuador
+             */
+            path: string;
+            /** @description 1 for a top-level taxon */
+            depth: number;
+            position: number;
+        };
+        CreateTaxonRequest: {
+            name: string;
+            /** @example roses */
+            slug: string;
+            /**
+             * Format: uuid
+             * @description Omit for top level
+             */
+            parentId?: string;
+            /** @default 0 */
+            position: number;
+        };
+        UpdateTaxonRequest: {
+            name?: string;
+            /** @example roses */
+            slug?: string;
+            /**
+             * Format: uuid
+             * @description Move under another taxon of the same taxonomy; null = top level
+             */
+            parentId?: string | null;
+            position?: number;
         };
     };
     responses: never;
@@ -1187,6 +1359,8 @@ export interface operations {
                 status?: "draft" | "active";
                 /** @description Search in product names and SKUs */
                 q?: string;
+                /** @description Only products in this taxon or any of its descendants */
+                taxonId?: string;
             };
             header?: never;
             path?: never;
@@ -1442,6 +1616,65 @@ export interface operations {
             };
         };
     };
+    Products_setTaxons: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetProductTaxonsRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Product"];
+                };
+            };
+            /** @description Unknown taxon, or invalid id */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Requires the `catalog:manage` permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
     Products_addVariant: {
         parameters: {
             query?: never;
@@ -1622,6 +1855,444 @@ export interface operations {
                 };
             };
             /** @description SKU already used */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    Taxonomies_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Taxonomy"][];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    Taxonomies_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateTaxonomyRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Taxonomy"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Requires the `catalog:manage` permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Slug already used */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    Taxonomies_remove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Requires the `catalog:manage` permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    Taxonomies_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateTaxonomyRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Taxonomy"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Requires the `catalog:manage` permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Slug already used */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    Taxonomies_tree: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Taxon"][];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    Taxonomies_createTaxon: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateTaxonRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Taxon"];
+                };
+            };
+            /** @description Invalid body or unknown parent */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Requires the `catalog:manage` permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description A sibling uses this slug */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    Taxons_remove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Requires the `catalog:manage` permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    Taxons_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateTaxonRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Taxon"];
+                };
+            };
+            /** @description Move into own subtree, or unknown parent */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Requires the `catalog:manage` permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description A sibling uses this slug */
             409: {
                 headers: {
                     [name: string]: unknown;

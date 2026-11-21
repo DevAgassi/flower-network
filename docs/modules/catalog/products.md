@@ -58,7 +58,8 @@ The API returns the result as `sellableVariantIds`. Stock, prices and carts must
 | `PATCH /products/:id/variants/:variantId`  | `catalog:manage` | `200 Variant`; `404`, `409`            |
 | `DELETE /products/:id/variants/:variantId` | `catalog:manage` | `204`; `400` for the master            |
 
-- `GET /products` — newest first, [cursor pagination](../platform/api-contract.md#pagination) (`limit` 1–200, default 50; `cursor`), `status` filter, `q` searches names and SKUs (case-insensitive, `%` and `_` are literal).
+- `GET /products` — newest first, [cursor pagination](../platform/api-contract.md#pagination) (`limit` 1–200, default 50; `cursor`), `status` filter, `q` searches names and SKUs (case-insensitive, `%` and `_` are literal), `taxonId` returns products in that taxon or any of its descendants ([taxonomies](taxonomies.md)).
+- Every product carries `taxonIds`; `PUT /products/:id/taxons { taxonIds }` replaces them.
 - Every staff member reads the catalog (florists sell from it); owner and admin manage it ([roles](../identity/roles.md#permission-matrix)).
 - `409` comes from the pre-check with a readable message, or from the unique index when two requests race.
 
@@ -70,4 +71,4 @@ POST /products
 
 ## Not yet
 
-Option types (CAT-03), prices (CAT-04), categories (CAT-02), photos (CAT-05), bouquet recipes and `kit_type` (CAT-06), barcodes (POS), the public storefront API (STF-01).
+Option types (CAT-03), prices (CAT-04), photos (CAT-05), bouquet recipes and `kit_type` (CAT-06), barcodes (POS), the public storefront API (STF-01).

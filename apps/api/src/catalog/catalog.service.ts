@@ -18,6 +18,7 @@ import {
   lt,
   ne,
   or,
+  sql,
 } from 'drizzle-orm';
 import { DATABASE, type Database } from '../database/database.module.js';
 import { toPage } from '../openapi/pagination.contract.js';
@@ -26,13 +27,21 @@ import {
   type ProductStatus,
   type ProductVariant,
   products,
+  productTaxons,
   productVariants,
+  taxons,
 } from './catalog.schema.js';
 
 type Metadata = Record<string, unknown>;
 
-/** A product with its live (not deleted) variants, master first. */
-export type ProductWithVariants = Product & { variants: ProductVariant[] };
+/**
+ * A product with its live (not deleted) variants, master first, and the
+ * live taxons it is in.
+ */
+export type ProductWithVariants = Product & {
+  variants: ProductVariant[];
+  taxonIds: string[];
+};
 
 export interface NewProduct {
   name: string;
@@ -105,8 +114,12 @@ export class CatalogService {
     cursor?: string;
     status?: ProductStatus;
     q?: string;
+    taxonId?: string;
   }): Promise<{ items: ProductWithVariants[]; nextCursor: string | null }> {
     const search = query.q ? likePattern(query.q) : undefined;
+    const inTaxon = query.taxonId
+      ? await this.inTaxonSubtree(query.taxonId)
+      : undefined;
     const rows = await this.db
       .select()
       .from(products)
@@ -115,6 +128,7 @@ export class CatalogService {
           live,
           query.status ? eq(products.status, query.status) : undefined,
           query.cursor ? lt(products.id, query.cursor) : undefined,
+          inTaxon,
           search
             ? or(
                 ilike(products.name, search),
@@ -292,20 +306,47 @@ export class CatalogService {
     if (taken) throw new ConflictException(`SKU ${sku} is already used`);
   }
 
+  /** Products linked to the taxon or to any of its descendants. */
+  private async inTaxonSubtree(taxonId: string) {
+    const [taxon] = await this.db
+      .select({ taxonomyId: taxons.taxonomyId, path: taxons.path })
+      .from(taxons)
+      .where(and(eq(taxons.id, taxonId), isNull(taxons.deletedAt)));
+    if (!taxon) throw new BadRequestException('Unknown taxon');
+    return exists(
+      this.db
+        .select({ id: productTaxons.productId })
+        .from(productTaxons)
+        .innerJoin(taxons, eq(taxons.id, productTaxons.taxonId))
+        .where(
+          and(
+            eq(productTaxons.productId, products.id),
+            eq(taxons.taxonomyId, taxon.taxonomyId),
+            isNull(taxons.deletedAt),
+            sql`${taxons.path} <@ ${taxon.path}::ltree`,
+          ),
+        ),
+    );
+  }
+
   private async withVariants(rows: Product[]): Promise<ProductWithVariants[]> {
     if (!rows.length) return [];
+    const ids = rows.map((r) => r.id);
+    const links = await this.db
+      .select({
+        productId: productTaxons.productId,
+        taxonId: productTaxons.taxonId,
+      })
+      .from(productTaxons)
+      .innerJoin(taxons, eq(taxons.id, productTaxons.taxonId))
+      .where(
+        and(inArray(productTaxons.productId, ids), isNull(taxons.deletedAt)),
+      )
+      .orderBy(asc(productTaxons.taxonId));
     const variants = await this.db
       .select()
       .from(productVariants)
-      .where(
-        and(
-          inArray(
-            productVariants.productId,
-            rows.map((r) => r.id),
-          ),
-          liveVariant,
-        ),
-      )
+      .where(and(inArray(productVariants.productId, ids), liveVariant))
       .orderBy(
         desc(productVariants.isMaster),
         asc(productVariants.position),
@@ -314,6 +355,9 @@ export class CatalogService {
     return rows.map((row) => ({
       ...row,
       variants: variants.filter((v) => v.productId === row.id),
+      taxonIds: links
+        .filter((l) => l.productId === row.id)
+        .map((l) => l.taxonId),
     }));
   }
 }

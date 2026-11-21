@@ -8,6 +8,7 @@ import {
   Param,
   Patch,
   Post,
+  Put,
   Query,
 } from '@nestjs/common';
 import {
@@ -33,6 +34,8 @@ import {
   productPageSchema,
   productSchema,
   productStatusSchema,
+  type SetProductTaxonsRequest,
+  setProductTaxonsRequestSchema,
   type UpdateProductRequest,
   updateProductRequestSchema,
   type UpdateVariantRequest,
@@ -47,6 +50,7 @@ import {
   type ProductWithVariants,
   sellableVariants,
 } from './catalog.service.js';
+import { TaxonomyService } from './taxonomy.service.js';
 
 const error = (status: HttpStatus, description?: string) =>
   ({ status, description, standardSchema: apiErrorSchema }) as const;
@@ -55,7 +59,10 @@ const error = (status: HttpStatus, description?: string) =>
 @ApiTags('catalog')
 @Controller('products')
 export class ProductsController {
-  constructor(private readonly catalog: CatalogService) {}
+  constructor(
+    private readonly catalog: CatalogService,
+    private readonly taxonomy: TaxonomyService,
+  ) {}
 
   @Get()
   @ApiBearerAuth()
@@ -78,6 +85,13 @@ export class ProductsController {
     name: 'status',
     required: false,
     enum: productStatusSchema.options,
+  })
+  @ApiQuery({
+    name: 'taxonId',
+    required: false,
+    type: String,
+    format: 'uuid',
+    description: 'Only products in this taxon or any of its descendants',
   })
   @ApiQuery({
     name: 'q',
@@ -154,6 +168,25 @@ export class ProductsController {
     await this.catalog.remove(id);
   }
 
+  @Put(':id/taxons')
+  @RequirePermission('catalog:manage')
+  @ApiOperation({
+    summary: "Replace the product's taxons",
+    description: 'Any taxonomies; new links go last inside each taxon.',
+  })
+  @ApiResponse({ status: HttpStatus.OK, standardSchema: productSchema })
+  @ApiResponse(error(HttpStatus.BAD_REQUEST, 'Unknown taxon, or invalid id'))
+  @ApiResponse(error(HttpStatus.NOT_FOUND))
+  async setTaxons(
+    @Param('id', { schema: productIdSchema }) id: string,
+    @Body({ schema: setProductTaxonsRequestSchema })
+    body: SetProductTaxonsRequest,
+  ): Promise<ProductDto> {
+    return toProductDto(
+      await this.taxonomy.setProductTaxons(id, body.taxonIds),
+    );
+  }
+
   @Post(':id/variants')
   @RequirePermission('catalog:manage')
   @ApiOperation({ summary: 'Add a variant to a product' })
@@ -224,6 +257,7 @@ function toProductDto(product: ProductWithVariants): ProductDto {
     publicMetadata: product.publicMetadata,
     privateMetadata: product.privateMetadata,
     variants: product.variants.map(toVariantDto),
+    taxonIds: product.taxonIds,
     sellableVariantIds: sellableVariants(product.variants).map((v) => v.id),
     createdAt: product.createdAt.toISOString(),
     updatedAt: product.updatedAt.toISOString(),

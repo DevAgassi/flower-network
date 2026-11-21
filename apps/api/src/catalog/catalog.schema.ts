@@ -2,11 +2,14 @@ import { sql } from 'drizzle-orm';
 import {
   boolean,
   check,
+  customType,
+  foreignKey,
   index,
   integer,
   jsonb,
   pgEnum,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uniqueIndex,
@@ -102,6 +105,90 @@ export const productVariants = pgTable(
   ],
 );
 
+/** PostgreSQL `ltree` (extension enabled in migration 0000). */
+const ltree = customType<{ data: string }>({ dataType: () => 'ltree' });
+
+/**
+ * An independent tree of categories: "Category", "Occasion". A product can be
+ * in taxons of several taxonomies at once.
+ */
+export const taxonomies = pgTable(
+  'taxonomies',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .$defaultFn(() => uuidv7()),
+    name: varchar('name', { length: 100 }).notNull(),
+    slug: varchar('slug', { length: 100 }).notNull(),
+    position: integer('position').notNull().default(0),
+    ...timestamps,
+  },
+  (t) => [
+    uniqueIndex('taxonomies_slug_unique')
+      .on(t.slug)
+      .where(sql`${t.deletedAt} is null`),
+    check(
+      'taxonomies_slug_format',
+      sql`${t.slug} ~ '^[a-z0-9]+(-[a-z0-9]+)*$'`,
+    ),
+  ],
+);
+
+/**
+ * A node of a taxonomy. `path` is the materialized path of slugs from the
+ * top (`flowers.roses.ecuador`): "everything under Flowers" is
+ * `path <@ 'flowers'`, served by the GiST index, no recursion (init.md §4.2).
+ */
+export const taxons = pgTable(
+  'taxons',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .$defaultFn(() => uuidv7()),
+    taxonomyId: uuid('taxonomy_id')
+      .notNull()
+      .references(() => taxonomies.id),
+    /** Null for a top-level taxon. */
+    parentId: uuid('parent_id'),
+    name: varchar('name', { length: 100 }).notNull(),
+    slug: varchar('slug', { length: 100 }).notNull(),
+    path: ltree('path').notNull(),
+    /** Order among siblings. */
+    position: integer('position').notNull().default(0),
+    ...timestamps,
+  },
+  (t) => [
+    foreignKey({ columns: [t.parentId], foreignColumns: [t.id] }),
+    // Unique path per taxonomy = unique slug among siblings.
+    uniqueIndex('taxons_path_unique')
+      .on(t.taxonomyId, t.path)
+      .where(sql`${t.deletedAt} is null`),
+    index('taxons_path_gist').using('gist', t.path),
+    check('taxons_slug_format', sql`${t.slug} ~ '^[a-z0-9]+(-[a-z0-9]+)*$'`),
+  ],
+);
+
+/** Which products are in which taxons, with their manual order there. */
+export const productTaxons = pgTable(
+  'product_taxons',
+  {
+    productId: uuid('product_id')
+      .notNull()
+      .references(() => products.id),
+    taxonId: uuid('taxon_id')
+      .notNull()
+      .references(() => taxons.id),
+    /** Manual order of products inside the taxon; new links go last. */
+    position: integer('position').notNull().default(0),
+  },
+  (t) => [
+    primaryKey({ columns: [t.productId, t.taxonId] }),
+    index('product_taxons_taxon_id_idx').on(t.taxonId, t.position),
+  ],
+);
+
 export type Product = typeof products.$inferSelect;
 export type ProductVariant = typeof productVariants.$inferSelect;
 export type ProductStatus = (typeof productStatus.enumValues)[number];
+export type Taxonomy = typeof taxonomies.$inferSelect;
+export type Taxon = typeof taxons.$inferSelect;
