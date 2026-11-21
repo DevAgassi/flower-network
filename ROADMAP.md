@@ -168,8 +168,8 @@ flowchart TB
 | E_NTF_S3 | Notifications | [#13](https://github.com/DevAgassi/flower-network/issues/13) |
 | E_IAM_S3 | Customers | [#14](https://github.com/DevAgassi/flower-network/issues/14) |
 | E_INV_S3 | Availability | [#15](https://github.com/DevAgassi/flower-network/issues/15) |
-| E_PLT_S3 | Translatable content | — |
 | E_PRI_S3 | Pricing & promotions | [#82](https://github.com/DevAgassi/flower-network/issues/82) |
+| E_PLT_S3 | Translatable content | [#109](https://github.com/DevAgassi/flower-network/issues/109) |
 | E_POS_S4 | Point of sale | [#16](https://github.com/DevAgassi/flower-network/issues/16) |
 | E_FSC_S4 | Fiscal | [#17](https://github.com/DevAgassi/flower-network/issues/17) |
 | E_ORD_S4 | Returns | [#18](https://github.com/DevAgassi/flower-network/issues/18) |
@@ -177,8 +177,8 @@ flowchart TB
 | E_ANL_S4 | Analytics | [#20](https://github.com/DevAgassi/flower-network/issues/20) |
 | E_INV_S4 | Reconciliation | [#21](https://github.com/DevAgassi/flower-network/issues/21) |
 | E_PLT_S4 | Load tests & deploy | [#22](https://github.com/DevAgassi/flower-network/issues/22) |
-| E_ADM_S4 | Docs editing | — |
-| E_AI_S4 | AI assistant (off unless AI is configured) | — |
+| E_ADM_S4 | Docs editing | [#110](https://github.com/DevAgassi/flower-network/issues/110) |
+| E_AI_S4 | Assistant | [#111](https://github.com/DevAgassi/flower-network/issues/111) |
 <!-- epics:end -->
 
 ---
@@ -227,7 +227,7 @@ The `Issue` column is filled in once the issue is created.
 | ADM-03 | E_ADM_S2 | Inventory & procurement screens (receipts, transfers, counts, write-offs) | ADM-01, INV-01…INV-06, PRC-02 | todo | [#50](https://github.com/DevAgassi/flower-network/issues/50) |
 | ADM-04 | E_ADM_S2 | Documentation section: `docs/` rendered in the admin, filtered by role on the server | ADM-01, PLT-12 | todo | [#95](https://github.com/DevAgassi/flower-network/issues/95) |
 | PLT-08 | E_PLT_S2 | Seed data generator (locations, catalog, stock at volume) | LOC-01, CAT-01, INV-01 | todo | [#30](https://github.com/DevAgassi/flower-network/issues/30) |
-| PLT-15 | E_PLT_S2 | Localization foundation: supported and default locales in config, locale resolution (user setting → cookie → `Accept-Language`), UI message catalogs in the web app (English is the default; Ukrainian as the second language, translated during development by the `translator` subagent to measure the cost; adopters add their own languages), money and dates through `Intl` | PLT-02 | todo | — |
+| PLT-15 | E_PLT_S2 | Localization foundation: supported and default locales in config, locale resolution (user setting → cookie → `Accept-Language`), UI message catalogs in the web app (English is the default; Ukrainian as the second language, translated during development by the `translator` subagent to measure the cost; adopters add their own languages), money and dates through `Intl` | PLT-02 | todo | [#112](https://github.com/DevAgassi/flower-network/issues/112) |
 
 ### Stage 3 · Storefront, Checkout, Payments, Delivery
 
@@ -254,7 +254,7 @@ The `Issue` column is filled in once the issue is created.
 | NTF-01 | E_NTF_S3 | ADR-5: `NotificationChannel` interface, templates | PLT-04 | todo | [#65](https://github.com/DevAgassi/flower-network/issues/65) |
 | NTF-02 | E_NTF_S3 | Order & shipment status triggers | NTF-01, ORD-02 | todo | [#66](https://github.com/DevAgassi/flower-network/issues/66) |
 | IAM-03 | E_IAM_S3 | ADR-3: guest checkout by phone, optional customer account | IAM-01 | todo | [#67](https://github.com/DevAgassi/flower-network/issues/67) |
-| PLT-16 | E_PLT_S3 | Translatable content (ADR-13): translations of catalog texts (products, options, taxons) and locations; the API answers in the requested locale with fallback to the default | PLT-15, CAT-01, CAT-02, CAT-03, LOC-01 | todo | — |
+| PLT-16 | E_PLT_S3 | Translatable content (ADR-13): translations of catalog texts (products, options, taxons) and locations; the API answers in the requested locale with fallback to the default | PLT-15, CAT-01, CAT-02, CAT-03, LOC-01 | todo | [#113](https://github.com/DevAgassi/flower-network/issues/113) |
 
 ### Stage 4 · POS, Analytics, Hardening
 
@@ -276,8 +276,8 @@ The `Issue` column is filled in once the issue is created.
 | PLT-10 | E_PLT_S4 | ADR-7: deployment target, PostgreSQL backups | — | todo | [#81](https://github.com/DevAgassi/flower-network/issues/81) |
 | PLT-13 | E_PLT_S4 | NestJS spans: add `@opentelemetry/instrumentation-nestjs-core` once it supports Nest 12 (blocked upstream) | PLT-05 | todo | [#98](https://github.com/DevAgassi/flower-network/issues/98) |
 | PLT-14 | E_PLT_S4 | Retire `init.md`: migrate spec, rules and ADRs into `docs/` and `CLAUDE.md`, then delete it | — | todo | [#99](https://github.com/DevAgassi/flower-network/issues/99) |
-| ADM-05 | E_ADM_S4 | Edit documentation in the admin: saving a page opens a GitHub pull request with the change | ADM-04 | todo | — |
-| AI-01 | E_AI_S4 | AI foundation and tools: provider settings (off by default, enabled only when an AI provider is configured), read-only assistant tools (product search, product details, availability in a store, stores and hours, delivery info, order status by order token) and an MCP server exposing them | STF-01, INV-07, CAT-04 | todo | — |
-| AI-02 | E_AI_S4 | Storefront AI chat (hidden while AI is off): streaming answers in the customer's language, rate limits, token cap per conversation, token and cost metrics | AI-01, PLT-15 | todo | — |
-| AI-03 | E_AI_S4 | Assistant eval set: choose model and settings by measured quality and cost | AI-02 | todo | — |
-| AI-04 | E_AI_S4 | Staff assistant in the admin: answers from `docs/` filtered by the user's role, with links | AI-01, ADM-04 | todo | — |
+| ADM-05 | E_ADM_S4 | Edit documentation in the admin: saving a page opens a GitHub pull request with the change | ADM-04 | todo | [#114](https://github.com/DevAgassi/flower-network/issues/114) |
+| AI-01 | E_AI_S4 | AI foundation and tools: provider settings (off by default, enabled only when an AI provider is configured), read-only assistant tools (product search, product details, availability in a store, stores and hours, delivery info, order status by order token) and an MCP server exposing them | STF-01, INV-07, CAT-04 | todo | [#115](https://github.com/DevAgassi/flower-network/issues/115) |
+| AI-02 | E_AI_S4 | Storefront AI chat (hidden while AI is off): streaming answers in the customer's language, rate limits, token cap per conversation, token and cost metrics | AI-01, PLT-15 | todo | [#116](https://github.com/DevAgassi/flower-network/issues/116) |
+| AI-03 | E_AI_S4 | Assistant eval set: choose model and settings by measured quality and cost | AI-02 | todo | [#117](https://github.com/DevAgassi/flower-network/issues/117) |
+| AI-04 | E_AI_S4 | Staff assistant in the admin: answers from `docs/` filtered by the user's role, with links | AI-01, ADM-04 | todo | [#118](https://github.com/DevAgassi/flower-network/issues/118) |
