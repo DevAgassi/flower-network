@@ -103,6 +103,7 @@ flowchart TB
 
   subgraph S2["Stage 2 · Catalog, Inventory, Procurement"]
     E_LOC_S2["LOC · Locations"]
+    E_PLT_S2["PLT · Seed data"]
     E_CAT_S2["CAT · Catalog & bouquets"]
     E_PRC_S2["PRC · Procurement"]
     E_INV_S2["INV · Inventory"]
@@ -139,7 +140,7 @@ flowchart TB
   classDef blocked fill:#fecaca,stroke:#b91c1c,color:#111827
 
   %% status:start
-  class E_PLT_S1,E_IAM_S1,E_LOC_S2,E_CAT_S2,E_PRC_S2,E_INV_S2,E_ADM_S2,E_STF_S3,E_CRT_S3,E_ORD_S3,E_PAY_S3,E_FUL_S3,E_NTF_S3,E_IAM_S3,E_INV_S3,E_PRI_S3,E_POS_S4,E_FSC_S4,E_ORD_S4,E_PAY_S4,E_ANL_S4,E_INV_S4,E_PLT_S4 todo
+  class E_PLT_S1,E_IAM_S1,E_LOC_S2,E_PLT_S2,E_CAT_S2,E_PRC_S2,E_INV_S2,E_ADM_S2,E_STF_S3,E_CRT_S3,E_ORD_S3,E_PAY_S3,E_FUL_S3,E_NTF_S3,E_IAM_S3,E_INV_S3,E_PRI_S3,E_POS_S4,E_FSC_S4,E_ORD_S4,E_PAY_S4,E_ANL_S4,E_INV_S4,E_PLT_S4 todo
   %% status:end
 ```
 
@@ -151,6 +152,7 @@ flowchart TB
 | E_PLT_S1 | Platform | [#1](https://github.com/DevAgassi/flower-network/issues/1) |
 | E_IAM_S1 | Auth & roles | [#2](https://github.com/DevAgassi/flower-network/issues/2) |
 | E_LOC_S2 | Locations | [#3](https://github.com/DevAgassi/flower-network/issues/3) |
+| E_PLT_S2 | Seed data | [#103](https://github.com/DevAgassi/flower-network/issues/103) |
 | E_CAT_S2 | Catalog & bouquets | [#4](https://github.com/DevAgassi/flower-network/issues/4) |
 | E_PRC_S2 | Procurement | [#5](https://github.com/DevAgassi/flower-network/issues/5) |
 | E_INV_S2 | Inventory | [#6](https://github.com/DevAgassi/flower-network/issues/6) |
@@ -190,7 +192,6 @@ The `Issue` column is filled in once the issue is created.
 | PLT-05 | E_PLT_S1 | Structured logging (`pino`), OpenTelemetry tracing, metrics endpoint | PLT-02 | done | [#27](https://github.com/DevAgassi/flower-network/issues/27) |
 | PLT-06 | E_PLT_S1 | OpenAPI generation and typed frontend client | PLT-02 | done | [#28](https://github.com/DevAgassi/flower-network/issues/28) |
 | PLT-07 | E_PLT_S1 | CI: lint, typecheck, tests, migration check | PLT-02 | done | [#29](https://github.com/DevAgassi/flower-network/issues/29) |
-| PLT-08 | E_PLT_S1 | Seed data generator (locations, catalog, stock at volume) | PLT-03 | todo | [#30](https://github.com/DevAgassi/flower-network/issues/30) |
 | PLT-11 | E_PLT_S1 | Environment configuration: zod-validated env, development / production modes, `pnpm start` | PLT-02 | done | [#91](https://github.com/DevAgassi/flower-network/issues/91) |
 | PLT-12 | E_PLT_S1 | Project documentation: `docs/` per module and service (reference, journal, role guides), `CLAUDE.md` | PLT-02 | done | [#94](https://github.com/DevAgassi/flower-network/issues/94) |
 | IAM-01 | E_IAM_S1 | Staff users, authentication, sessions in Redis | PLT-03 | todo | [#31](https://github.com/DevAgassi/flower-network/issues/31) |
@@ -219,6 +220,7 @@ The `Issue` column is filled in once the issue is created.
 | ADM-02 | E_ADM_S2 | Catalog management screens | ADM-01, CAT-01…CAT-06 | todo | [#49](https://github.com/DevAgassi/flower-network/issues/49) |
 | ADM-03 | E_ADM_S2 | Inventory & procurement screens (receipts, transfers, counts, write-offs) | ADM-01, INV-01…INV-06, PRC-02 | todo | [#50](https://github.com/DevAgassi/flower-network/issues/50) |
 | ADM-04 | E_ADM_S2 | Documentation section: `docs/` rendered in the admin, filtered by role on the server | ADM-01, PLT-12 | todo | [#95](https://github.com/DevAgassi/flower-network/issues/95) |
+| PLT-08 | E_PLT_S2 | Seed data generator (locations, catalog, stock at volume) | LOC-01, CAT-01, INV-01 | todo | [#30](https://github.com/DevAgassi/flower-network/issues/30) |
 
 ### Stage 3 · Storefront, Checkout, Payments, Delivery
 
