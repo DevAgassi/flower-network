@@ -15,6 +15,15 @@ What is **not** here:
 - the plan and feature registry — [ROADMAP.md](../ROADMAP.md);
 - setup in five commands — [README.md](../README.md).
 
+## Decisions
+
+Agreed with the project owner (2026-11-21):
+
+- **One language — English** — for every document, including guides for staff. Staff read guides in the admin and translate the page in the browser when needed. One language keeps documents in sync and the project readable for an international team.
+- **The repository is public.** Documentation and guides stay general — how the product works, not one business's internal procedures, supplier terms or figures. A business that adopts the product clones the repository and adds its private parts there.
+- **Documents live in the repository** as Markdown and change through pull requests, in the same PR as the code they describe. Later the admin gets an editor that turns a saved page into a GitHub pull request (ADM-05) — the repository stays the single source; documents are never stored in the database.
+- **Shown in one place:** the admin's documentation section (ADM-04) renders these files, technical documents and staff guides together, each role seeing the documents whose `audience` lists it. No separate documentation site and no new service: the files ship inside the web app.
+
 ## Layout
 
 ```

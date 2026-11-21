@@ -21,7 +21,8 @@
     "NTF": { "name": "notifications", "color": "0284c7" },
     "POS": { "name": "pos", "color": "be123c" },
     "FSC": { "name": "fiscal", "color": "78716c" },
-    "ANL": { "name": "analytics", "color": "4f46e5" }
+    "ANL": { "name": "analytics", "color": "4f46e5" },
+    "AI": { "name": "ai", "color": "0f766e" }
   },
   "links": [{ "label": "init.md", "path": "init.md" }]
 }
