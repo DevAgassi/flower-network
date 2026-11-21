@@ -91,6 +91,24 @@ flowchart LR
 - **Operation ids** are `<Controller>_<method>` (`Health_check`).
 - **Docs UI.** Outside production the API serves Swagger UI at http://localhost:3001/docs and the JSON at `/docs/openapi.json`. `/metrics` is excluded from the contract.
 
+## Query parameters
+
+- **`@ApiQuery` for every query parameter.** `@nestjs/swagger` turns a `@Query('name', { schema })` into a parameter but always marks it required, and does not expand a whole-object `@Query({ schema })` at all. Validate with the zod schema and document each parameter with `@ApiQuery({ name, required: false, … })` next to it ([locations journal](../locations/journal.md)). Check `required` in the `openapi.json` diff.
+- Query values arrive as strings: use `z.coerce.number()` for numbers and `z.enum(['true', 'false'])` for flags.
+
+## Pagination
+
+Every list that can grow large uses **cursor pagination** ([`pagination.contract.ts`](../../../apps/api/src/openapi/pagination.contract.ts)):
+
+```text
+GET /products?limit=50               → { items: [...50], nextCursor: "0193…" }
+GET /products?limit=50&cursor=0193…  → { items: [...], nextCursor: null }   // last page
+```
+
+- Newest first by UUIDv7 `id`; the next page is `id < cursor`. No `OFFSET` scans and no `COUNT(*)` on live tables (init.md §5), and pages stay correct while rows are inserted.
+- In a module: spread `paginationQuery` into the query schema, fetch `limit + 1` rows ordered by `id desc`, return `toPage(rows, limit)`; the response schema is `pageSchema(itemSchema, 'ThingPage')`.
+- Short directories that never grow large (locations) return a plain array.
+
 ## Authentication in the contract
 
 Every route requires a session unless marked `@Public()` ([Sign-in and sessions](../identity/sessions.md#protecting-routes)). Protected operations carry `@ApiBearerAuth()`, so `openapi.json` shows the bearer requirement and the client passes the token. Errors use the shared `ApiError` schema ([`errors.contract.ts`](../../../apps/api/src/openapi/errors.contract.ts)): `@ApiResponse({ status: HttpStatus.UNAUTHORIZED, standardSchema: apiErrorSchema })`.

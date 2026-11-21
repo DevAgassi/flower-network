@@ -127,7 +127,12 @@ describe('Roles, permissions and staff management (e2e)', () => {
       .expect(({ body }) =>
         expect(body).toMatchObject({
           role: 'admin',
-          permissions: ['staff:read', 'staff:manage', 'locations:manage'],
+          permissions: [
+            'staff:read',
+            'staff:manage',
+            'locations:manage',
+            'catalog:manage',
+          ],
           locations: 'all',
         }),
       );

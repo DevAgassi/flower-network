@@ -202,7 +202,7 @@ The `Issue` column is filled in once the issue is created.
 | ID | Epic | Feature | Depends on | Status | Issue |
 |---|---|---|---|---|---|
 | LOC-01 | E_LOC_S2 | Locations: stores & warehouses, coordinates, opening hours | PLT-03 | done | [#33](https://github.com/DevAgassi/flower-network/issues/33) |
-| CAT-01 | E_CAT_S2 | Products & variants (master variant) | PLT-03 | todo | [#34](https://github.com/DevAgassi/flower-network/issues/34) |
+| CAT-01 | E_CAT_S2 | Products & variants (master variant) | PLT-03 | done | [#34](https://github.com/DevAgassi/flower-network/issues/34) |
 | CAT-02 | E_CAT_S2 | Taxonomies (multiple trees: category, occasion) and taxons on `ltree` | CAT-01 | todo | [#35](https://github.com/DevAgassi/flower-network/issues/35) |
 | CAT-03 | E_CAT_S2 | Option types / attributes | CAT-01 | todo | [#36](https://github.com/DevAgassi/flower-network/issues/36) |
 | CAT-04 | E_CAT_S2 | Prices (UAH, kopecks) | CAT-01 | todo | [#37](https://github.com/DevAgassi/flower-network/issues/37) |

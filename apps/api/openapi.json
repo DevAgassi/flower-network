@@ -854,6 +854,705 @@
         ],
         "x-required-permission": "locations:manage"
       }
+    },
+    "/products": {
+      "get": {
+        "operationId": "Products_list",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Page size, 1–200 (default 50)",
+            "schema": {
+              "default": 50,
+              "description": "Page size, 1–200",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200
+            }
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "description": "`nextCursor` of the previous page",
+            "schema": {
+              "description": "`nextCursor` of the previous page; omit for the first page",
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "draft",
+                "active"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "description": "Search in product names and SKUs",
+            "schema": {
+              "description": "Search in product names and SKUs",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Products, newest first, one page at a time",
+        "tags": [
+          "catalog"
+        ]
+      },
+      "post": {
+        "description": "Starts as `draft` unless another status is given.",
+        "operationId": "Products_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProductRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Requires the `catalog:manage` permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Slug or SKU already used",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a product with its master variant",
+        "tags": [
+          "catalog"
+        ],
+        "x-required-permission": "catalog:manage"
+      }
+    },
+    "/products/{id}": {
+      "get": {
+        "operationId": "Products_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "One product with its variants",
+        "tags": [
+          "catalog"
+        ]
+      },
+      "patch": {
+        "operationId": "Products_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProductRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Requires the `catalog:manage` permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Slug already used",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change a product",
+        "tags": [
+          "catalog"
+        ],
+        "x-required-permission": "catalog:manage"
+      },
+      "delete": {
+        "description": "Hidden from the catalog; orders and stock history keep pointing at it. Its slug and SKUs become free.",
+        "operationId": "Products_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Requires the `catalog:manage` permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a product and its variants (soft delete)",
+        "tags": [
+          "catalog"
+        ],
+        "x-required-permission": "catalog:manage"
+      }
+    },
+    "/products/{id}/variants": {
+      "post": {
+        "operationId": "Products_addVariant",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateVariantRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Variant"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Requires the `catalog:manage` permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "SKU already used",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add a variant to a product",
+        "tags": [
+          "catalog"
+        ],
+        "x-required-permission": "catalog:manage"
+      }
+    },
+    "/products/{id}/variants/{variantId}": {
+      "patch": {
+        "operationId": "Products_updateVariant",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          },
+          {
+            "name": "variantId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateVariantRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Variant"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Requires the `catalog:manage` permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "SKU already used",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change a variant",
+        "tags": [
+          "catalog"
+        ],
+        "x-required-permission": "catalog:manage"
+      },
+      "delete": {
+        "description": "The master variant is deleted only with its product.",
+        "operationId": "Products_removeVariant",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          },
+          {
+            "name": "variantId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "400": {
+            "description": "Master variant, or invalid id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Requires the `catalog:manage` permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a variant (soft delete)",
+        "tags": [
+          "catalog"
+        ],
+        "x-required-permission": "catalog:manage"
+      }
     }
   },
   "info": {
@@ -1036,7 +1735,8 @@
         "enum": [
           "staff:read",
           "staff:manage",
-          "locations:manage"
+          "locations:manage",
+          "catalog:manage"
         ]
       },
       "ApiError": {
@@ -1440,6 +2140,310 @@
               "$ref": "#/components/schemas/OpeningHours"
             },
             "description": "Replaces the whole week"
+          }
+        }
+      },
+      "ProductStatus": {
+        "type": "string",
+        "enum": [
+          "draft",
+          "active"
+        ],
+        "description": "`draft` is being prepared and not shown to customers"
+      },
+      "ProductPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Product"
+            }
+          },
+          "nextCursor": {
+            "nullable": true,
+            "description": "Pass as `cursor` to get the next page; null on the last",
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "Product": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "description": {
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ProductStatus"
+          },
+          "publicMetadata": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Data for the storefront and integrations"
+          },
+          "privateMetadata": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Internal data, never shown to customers"
+          },
+          "variants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Variant"
+            },
+            "description": "Master first, then by position"
+          },
+          "sellableVariantIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "description": "What can be sold: the non-master variants, or the master when there are none"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "description",
+          "status",
+          "publicMetadata",
+          "privateMetadata",
+          "variants",
+          "sellableVariantIds",
+          "createdAt",
+          "updatedAt"
+        ],
+        "additionalProperties": false
+      },
+      "Variant": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "isMaster": {
+            "type": "boolean"
+          },
+          "position": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "publicMetadata": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Data for the storefront and integrations"
+          },
+          "privateMetadata": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Internal data, never shown to customers"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          }
+        },
+        "required": [
+          "id",
+          "sku",
+          "isMaster",
+          "position",
+          "publicMetadata",
+          "privateMetadata",
+          "createdAt",
+          "updatedAt"
+        ],
+        "additionalProperties": false
+      },
+      "CreateProductRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "slug": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "example": "ecuador-rose"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 10000
+          },
+          "status": {
+            "default": "draft",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProductStatus"
+              }
+            ]
+          },
+          "sku": {
+            "example": "ROSE-ECU-60",
+            "description": "SKU of the master variant",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "publicMetadata": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Data for the storefront and integrations"
+          },
+          "privateMetadata": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Internal data, never shown to customers"
+          }
+        },
+        "required": [
+          "name",
+          "slug",
+          "sku"
+        ]
+      },
+      "UpdateProductRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "slug": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "example": "ecuador-rose"
+          },
+          "description": {
+            "nullable": true,
+            "type": "string",
+            "maxLength": 10000
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProductStatus"
+              }
+            ]
+          },
+          "publicMetadata": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Data for the storefront and integrations"
+          },
+          "privateMetadata": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Internal data, never shown to customers"
+          }
+        }
+      },
+      "CreateVariantRequest": {
+        "type": "object",
+        "properties": {
+          "sku": {
+            "example": "ROSE-ECU-60",
+            "description": "Stored uppercase",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "position": {
+            "default": 0,
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10000
+          },
+          "publicMetadata": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Data for the storefront and integrations"
+          },
+          "privateMetadata": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Internal data, never shown to customers"
+          }
+        },
+        "required": [
+          "sku"
+        ]
+      },
+      "UpdateVariantRequest": {
+        "type": "object",
+        "properties": {
+          "sku": {
+            "example": "ROSE-ECU-60",
+            "description": "Stored uppercase",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "position": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10000
+          },
+          "publicMetadata": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Data for the storefront and integrations"
+          },
+          "privateMetadata": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Internal data, never shown to customers"
           }
         }
       }

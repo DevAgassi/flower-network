@@ -11,6 +11,7 @@ export const PERMISSIONS = [
   'staff:read',
   'staff:manage',
   'locations:manage',
+  'catalog:manage',
 ] as const;
 
 export type Permission = (typeof PERMISSIONS)[number];
@@ -18,7 +19,7 @@ export type Permission = (typeof PERMISSIONS)[number];
 /** Who can do what. The owner can do everything. */
 const ROLE_PERMISSIONS: Record<StaffRole, readonly Permission[]> = {
   owner: PERMISSIONS,
-  admin: ['staff:read', 'staff:manage', 'locations:manage'],
+  admin: ['staff:read', 'staff:manage', 'locations:manage', 'catalog:manage'],
   florist: [],
   courier: [],
 };
