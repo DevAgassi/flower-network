@@ -23,10 +23,11 @@ A subagent knows only its brief. Its mistakes come back as confidently as its re
 
 ## Agents
 
-| Agent                                                        | Model  | Tools                  | For                                                                                    | Lifetime  | Status                  |
-| ------------------------------------------------------------ | ------ | ---------------------- | -------------------------------------------------------------------------------------- | --------- | ----------------------- |
-| [`github-ops`](../../.claude/agents/github-ops.md)           | Haiku  | Bash, Read             | Issue body from a prepared file, comments, board status, waiting for CI and reporting  | permanent | trial (results checked) |
-| [`ci-investigator`](../../.claude/agents/ci-investigator.md) | Sonnet | Bash, Read, Grep, Glob | Why a CI run failed: failed steps, key log lines, cause with `file:line`, proposed fix | permanent | trial (results checked) |
+| Agent                                                        | Model  | Tools                   | For                                                                                                                  | Lifetime               | Status                       |
+| ------------------------------------------------------------ | ------ | ----------------------- | -------------------------------------------------------------------------------------------------------------------- | ---------------------- | ---------------------------- |
+| [`github-ops`](../../.claude/agents/github-ops.md)           | Haiku  | Bash, Read              | Issue body from a prepared file, comments, board status, waiting for CI and reporting                                | permanent              | trial (results checked)      |
+| [`ci-investigator`](../../.claude/agents/ci-investigator.md) | Sonnet | Bash, Read, Grep, Glob  | Why a CI run failed: failed steps, key log lines, cause with `file:line`, proposed fix                               | permanent              | trial (results checked)      |
+| [`translator`](../../.claude/agents/translator.md)           | Haiku  | Read, Write, Edit, Glob | UI message catalogs from English into another locale (Ukrainian first), keeping keys, placeholders and plural syntax | permanent, from PLT-15 | ready, first use with PLT-15 |
 
 Rules for every agent: no commits, pushes or merges; only the operations in its brief; report exact results and errors.
 
@@ -45,7 +46,9 @@ Ideas noted during development, with the stage where they would help. Promote on
 
 What delegation did in practice — kept short, newest first. At the end of the project this log becomes a reusable workflow for the next one.
 
-| Date       | Agent        | Task                                            | Result                                                                                            |
-| ---------- | ------------ | ----------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| 2026-11-21 | `github-ops` | CAT-01: move #34 and epic #4 to In Progress     | Correct (read-back matched, verified by the main assistant). ~12k Haiku tokens, 1 tool call, 27 s |
-| 2026-11-21 | —            | Agents `github-ops` and `ci-investigator` added | —                                                                                                 |
+| Date       | Agent        | Task                                                                                                  | Result                                                                                                                        |
+| ---------- | ------------ | ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| 2026-11-21 | —            | `translator` added for UI catalogs (PLT-15); its token use per translated catalog will be logged here | —                                                                                                                             |
+| 2026-11-21 | `github-ops` | CAT-01 finish: issue body from file, comment, board Done, wait for CI                                 | All four correct (verified). ~13k Haiku tokens, 4 tool calls, 75 s — mostly waiting for CI while the main assistant worked on |
+| 2026-11-21 | `github-ops` | CAT-01: move #34 and epic #4 to In Progress                                                           | Correct (read-back matched, verified by the main assistant). ~12k Haiku tokens, 1 tool call, 27 s                             |
+| 2026-11-21 | —            | Agents `github-ops` and `ci-investigator` added                                                       | —                                                                                                                             |

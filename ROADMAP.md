@@ -22,9 +22,9 @@ The live status of every issue is the `Status` field on the [Project board](http
 |---|---|---|
 | **Backlog** | Not ready: details or decisions are missing, or the issue is still being written | Default for new issues |
 | **Todo** | Ready to start: scope and acceptance are clear | Moved manually after refinement |
-| **In Progress** | Being worked on | Moved manually when work starts |
+| **In Progress** | Being worked on | Moved by the assistant together with its epic when work starts |
 | **Blocked** | Started, but stopped by a problem | Moved manually; a comment on the issue says what blocks it and what unblocks it. Returns to In Progress when resolved |
-| **Done** | Merged to `main` | Automatically, when the PR with `Closes #N` is merged |
+| **Done** | Reviewed by the owner, pushed, PR with `Closes #N` open or merged | Moved by the assistant when the owner says "commit and push"; merging the PR keeps it here |
 | **Deployed on Stage** | Running on the staging environment | Not used yet — enabled together with deployment (PLT-10) |
 | **Deployed on Prod** | Running in production | Not used yet — enabled together with deployment (PLT-10) |
 
@@ -103,7 +103,7 @@ flowchart TB
 
   subgraph S2["Stage 2 · Catalog, Inventory, Procurement"]
     E_LOC_S2["LOC · Locations"]
-    E_PLT_S2["PLT · Seed data"]
+    E_PLT_S2["PLT · Seed data, localization"]
     E_CAT_S2["CAT · Catalog & bouquets"]
     E_PRC_S2["PRC · Procurement"]
     E_INV_S2["INV · Inventory"]
@@ -120,6 +120,7 @@ flowchart TB
     E_IAM_S3["IAM · Customers"]
     E_INV_S3["INV · Availability"]
     E_PRI_S3["PRI · Pricing & promotions"]
+    E_PLT_S3["PLT · Translatable content"]
   end
 
   subgraph S4["Stage 4 · POS, Analytics, Hardening"]
@@ -130,6 +131,8 @@ flowchart TB
     E_ANL_S4["ANL · Analytics"]
     E_INV_S4["INV · Reconciliation"]
     E_PLT_S4["PLT · Load tests & deploy"]
+    E_ADM_S4["ADM · Docs editing"]
+    E_AI_S4["AI · Assistant"]
   end
 
   S1 --> S2 --> S3 --> S4
@@ -140,7 +143,7 @@ flowchart TB
   classDef blocked fill:#fecaca,stroke:#b91c1c,color:#111827
 
   %% status:start
-  class E_PLT_S1,E_IAM_S1,E_LOC_S2,E_PLT_S2,E_CAT_S2,E_PRC_S2,E_INV_S2,E_ADM_S2,E_STF_S3,E_CRT_S3,E_ORD_S3,E_PAY_S3,E_FUL_S3,E_NTF_S3,E_IAM_S3,E_INV_S3,E_PRI_S3,E_POS_S4,E_FSC_S4,E_ORD_S4,E_PAY_S4,E_ANL_S4,E_INV_S4,E_PLT_S4 todo
+  class E_PLT_S1,E_IAM_S1,E_LOC_S2,E_PLT_S2,E_CAT_S2,E_PRC_S2,E_INV_S2,E_ADM_S2,E_STF_S3,E_CRT_S3,E_ORD_S3,E_PAY_S3,E_FUL_S3,E_NTF_S3,E_IAM_S3,E_INV_S3,E_PRI_S3,E_PLT_S3,E_POS_S4,E_FSC_S4,E_ORD_S4,E_PAY_S4,E_ANL_S4,E_INV_S4,E_PLT_S4,E_ADM_S4,E_AI_S4 todo
   %% status:end
 ```
 
@@ -152,7 +155,7 @@ flowchart TB
 | E_PLT_S1 | Platform | [#1](https://github.com/DevAgassi/flower-network/issues/1) |
 | E_IAM_S1 | Auth & roles | [#2](https://github.com/DevAgassi/flower-network/issues/2) |
 | E_LOC_S2 | Locations | [#3](https://github.com/DevAgassi/flower-network/issues/3) |
-| E_PLT_S2 | Seed data | [#103](https://github.com/DevAgassi/flower-network/issues/103) |
+| E_PLT_S2 | Seed data, localization | [#103](https://github.com/DevAgassi/flower-network/issues/103) |
 | E_CAT_S2 | Catalog & bouquets | [#4](https://github.com/DevAgassi/flower-network/issues/4) |
 | E_PRC_S2 | Procurement | [#5](https://github.com/DevAgassi/flower-network/issues/5) |
 | E_INV_S2 | Inventory | [#6](https://github.com/DevAgassi/flower-network/issues/6) |
@@ -165,6 +168,7 @@ flowchart TB
 | E_NTF_S3 | Notifications | [#13](https://github.com/DevAgassi/flower-network/issues/13) |
 | E_IAM_S3 | Customers | [#14](https://github.com/DevAgassi/flower-network/issues/14) |
 | E_INV_S3 | Availability | [#15](https://github.com/DevAgassi/flower-network/issues/15) |
+| E_PLT_S3 | Translatable content | — |
 | E_PRI_S3 | Pricing & promotions | [#82](https://github.com/DevAgassi/flower-network/issues/82) |
 | E_POS_S4 | Point of sale | [#16](https://github.com/DevAgassi/flower-network/issues/16) |
 | E_FSC_S4 | Fiscal | [#17](https://github.com/DevAgassi/flower-network/issues/17) |
@@ -173,6 +177,8 @@ flowchart TB
 | E_ANL_S4 | Analytics | [#20](https://github.com/DevAgassi/flower-network/issues/20) |
 | E_INV_S4 | Reconciliation | [#21](https://github.com/DevAgassi/flower-network/issues/21) |
 | E_PLT_S4 | Load tests & deploy | [#22](https://github.com/DevAgassi/flower-network/issues/22) |
+| E_ADM_S4 | Docs editing | — |
+| E_AI_S4 | AI assistant (off unless AI is configured) | — |
 <!-- epics:end -->
 
 ---
@@ -216,18 +222,19 @@ The `Issue` column is filled in once the issue is created.
 | INV-04 | E_INV_S2 | Stock transfers: `draft → shipped → received → closed`, in-transit, losses | INV-01 | todo | [#45](https://github.com/DevAgassi/flower-network/issues/45) |
 | INV-05 | E_INV_S2 | Inventory counts and `count_adjustment` | INV-01 | todo | [#46](https://github.com/DevAgassi/flower-network/issues/46) |
 | INV-06 | E_INV_S2 | Bouquet assembly (`assembly_consume` / `assembly_produce`) | INV-02, CAT-06 | todo | [#47](https://github.com/DevAgassi/flower-network/issues/47) |
-| ADM-01 | E_ADM_S2 | Admin shell: layout, login, role-based navigation | IAM-02 | todo | [#48](https://github.com/DevAgassi/flower-network/issues/48) |
+| ADM-01 | E_ADM_S2 | Admin shell: layout, login, role-based navigation | IAM-02, PLT-15 | todo | [#48](https://github.com/DevAgassi/flower-network/issues/48) |
 | ADM-02 | E_ADM_S2 | Catalog management screens | ADM-01, CAT-01…CAT-06 | todo | [#49](https://github.com/DevAgassi/flower-network/issues/49) |
 | ADM-03 | E_ADM_S2 | Inventory & procurement screens (receipts, transfers, counts, write-offs) | ADM-01, INV-01…INV-06, PRC-02 | todo | [#50](https://github.com/DevAgassi/flower-network/issues/50) |
 | ADM-04 | E_ADM_S2 | Documentation section: `docs/` rendered in the admin, filtered by role on the server | ADM-01, PLT-12 | todo | [#95](https://github.com/DevAgassi/flower-network/issues/95) |
 | PLT-08 | E_PLT_S2 | Seed data generator (locations, catalog, stock at volume) | LOC-01, CAT-01, INV-01 | todo | [#30](https://github.com/DevAgassi/flower-network/issues/30) |
+| PLT-15 | E_PLT_S2 | Localization foundation: supported and default locales in config, locale resolution (user setting → cookie → `Accept-Language`), UI message catalogs in the web app (English is the default; Ukrainian as the second language, translated during development by the `translator` subagent to measure the cost; adopters add their own languages), money and dates through `Intl` | PLT-02 | todo | — |
 
 ### Stage 3 · Storefront, Checkout, Payments, Delivery
 
 | ID | Epic | Feature | Depends on | Status | Issue |
 |---|---|---|---|---|---|
 | INV-07 | E_INV_S3 | Availability per location API (incl. computed `made_to_order` availability) | INV-01, CAT-06 | todo | [#51](https://github.com/DevAgassi/flower-network/issues/51) |
-| STF-01 | E_STF_S3 | Catalog pages: SSR, slugs, sitemap, typed search params | CAT-01…CAT-05, PLT-06 | todo | [#52](https://github.com/DevAgassi/flower-network/issues/52) |
+| STF-01 | E_STF_S3 | Catalog pages: SSR, slugs, sitemap, typed search params | CAT-01…CAT-05, PLT-06, PLT-16 | todo | [#52](https://github.com/DevAgassi/flower-network/issues/52) |
 | STF-02 | E_STF_S3 | Filter by availability in a selected store | STF-01, INV-07 | todo | [#53](https://github.com/DevAgassi/flower-network/issues/53) |
 | STF-03 | E_STF_S3 | Checkout UI: pickup / delivery, recipient, card message, slot | CRT-01, FUL-01…FUL-04 | todo | [#60](https://github.com/DevAgassi/flower-network/issues/60) |
 | PRI-01 | E_PRI_S3 | Shared `PriceCalculator`: line totals, adjustments, delivery cost | CAT-04 | todo | [#83](https://github.com/DevAgassi/flower-network/issues/83) |
@@ -247,6 +254,7 @@ The `Issue` column is filled in once the issue is created.
 | NTF-01 | E_NTF_S3 | ADR-5: `NotificationChannel` interface, templates | PLT-04 | todo | [#65](https://github.com/DevAgassi/flower-network/issues/65) |
 | NTF-02 | E_NTF_S3 | Order & shipment status triggers | NTF-01, ORD-02 | todo | [#66](https://github.com/DevAgassi/flower-network/issues/66) |
 | IAM-03 | E_IAM_S3 | ADR-3: guest checkout by phone, optional customer account | IAM-01 | todo | [#67](https://github.com/DevAgassi/flower-network/issues/67) |
+| PLT-16 | E_PLT_S3 | Translatable content (ADR-13): translations of catalog texts (products, options, taxons) and locations; the API answers in the requested locale with fallback to the default | PLT-15, CAT-01, CAT-02, CAT-03, LOC-01 | todo | — |
 
 ### Stage 4 · POS, Analytics, Hardening
 
@@ -268,3 +276,8 @@ The `Issue` column is filled in once the issue is created.
 | PLT-10 | E_PLT_S4 | ADR-7: deployment target, PostgreSQL backups | — | todo | [#81](https://github.com/DevAgassi/flower-network/issues/81) |
 | PLT-13 | E_PLT_S4 | NestJS spans: add `@opentelemetry/instrumentation-nestjs-core` once it supports Nest 12 (blocked upstream) | PLT-05 | todo | [#98](https://github.com/DevAgassi/flower-network/issues/98) |
 | PLT-14 | E_PLT_S4 | Retire `init.md`: migrate spec, rules and ADRs into `docs/` and `CLAUDE.md`, then delete it | — | todo | [#99](https://github.com/DevAgassi/flower-network/issues/99) |
+| ADM-05 | E_ADM_S4 | Edit documentation in the admin: saving a page opens a GitHub pull request with the change | ADM-04 | todo | — |
+| AI-01 | E_AI_S4 | AI foundation and tools: provider settings (off by default, enabled only when an AI provider is configured), read-only assistant tools (product search, product details, availability in a store, stores and hours, delivery info, order status by order token) and an MCP server exposing them | STF-01, INV-07, CAT-04 | todo | — |
+| AI-02 | E_AI_S4 | Storefront AI chat (hidden while AI is off): streaming answers in the customer's language, rate limits, token cap per conversation, token and cost metrics | AI-01, PLT-15 | todo | — |
+| AI-03 | E_AI_S4 | Assistant eval set: choose model and settings by measured quality and cost | AI-02 | todo | — |
+| AI-04 | E_AI_S4 | Staff assistant in the admin: answers from `docs/` filtered by the user's role, with links | AI-01, ADM-04 | todo | — |
