@@ -4,6 +4,9 @@ import { z } from 'zod';
 export const DEVELOPMENT_DATABASE_URL =
   'postgres://flower:flower@localhost:5433/flower';
 
+/** Matches the Redis service in compose.yaml (development and tests only). */
+export const DEVELOPMENT_REDIS_URL = 'redis://localhost:6379';
+
 /** OTLP/HTTP endpoint of Jaeger in compose.yaml (development only). */
 export const DEVELOPMENT_OTLP_ENDPOINT = 'http://localhost:4318';
 
@@ -34,6 +37,8 @@ export const envSchema = z
       (v) => v ?? 3001,
     ),
     DATABASE_URL: optional(z.url({ protocol: /^postgres(ql)?$/ })),
+    // Sessions, login limits; later BullMQ.
+    REDIS_URL: optional(z.url({ protocol: /^rediss?$/ })),
     DATABASE_POOL_MAX: optional(
       z.coerce.number().int().min(1).max(100),
     ).transform((v) => v ?? 10),
@@ -50,17 +55,21 @@ export const envSchema = z
     ),
   })
   .superRefine((env, ctx) => {
-    if (env.NODE_ENV === 'production' && !env.DATABASE_URL) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['DATABASE_URL'],
-        message: 'is required in production',
-      });
+    if (env.NODE_ENV !== 'production') return;
+    for (const key of ['DATABASE_URL', 'REDIS_URL'] as const) {
+      if (!env[key]) {
+        ctx.addIssue({
+          code: 'custom',
+          path: [key],
+          message: 'is required in production',
+        });
+      }
     }
   })
   .transform((env) => ({
     ...env,
     DATABASE_URL: env.DATABASE_URL ?? DEVELOPMENT_DATABASE_URL,
+    REDIS_URL: env.REDIS_URL ?? DEVELOPMENT_REDIS_URL,
     LOG_LEVEL: env.LOG_LEVEL ?? (env.NODE_ENV === 'test' ? 'silent' : 'info'),
     OTEL_EXPORTER_OTLP_ENDPOINT:
       env.OTEL_EXPORTER_OTLP_ENDPOINT ??

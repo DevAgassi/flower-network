@@ -1,6 +1,7 @@
 import {
   DEVELOPMENT_DATABASE_URL,
   DEVELOPMENT_OTLP_ENDPOINT,
+  DEVELOPMENT_REDIS_URL,
   parseEnv,
 } from './env.schema.js';
 
@@ -10,6 +11,7 @@ describe('parseEnv', () => {
       NODE_ENV: 'development',
       PORT: 3001,
       DATABASE_URL: DEVELOPMENT_DATABASE_URL,
+      REDIS_URL: DEVELOPMENT_REDIS_URL,
       DATABASE_POOL_MAX: 10,
       OUTBOX_RELAY: 'on',
       LOG_LEVEL: 'info',
@@ -27,6 +29,7 @@ describe('parseEnv', () => {
       parseEnv({
         NODE_ENV: 'production',
         DATABASE_URL: DEVELOPMENT_DATABASE_URL,
+        REDIS_URL: DEVELOPMENT_REDIS_URL,
       }),
     ).toMatchObject({
       LOG_LEVEL: 'info',
@@ -39,6 +42,7 @@ describe('parseEnv', () => {
       NODE_ENV: 'production',
       PORT: '8080',
       DATABASE_URL: 'postgresql://app:secret@db:5432/flower',
+      REDIS_URL: 'rediss://cache:6380',
       DATABASE_POOL_MAX: '25',
       OUTBOX_RELAY: 'off',
       LOG_LEVEL: 'debug',
@@ -50,6 +54,7 @@ describe('parseEnv', () => {
       NODE_ENV: 'production',
       PORT: 8080,
       DATABASE_URL: 'postgresql://app:secret@db:5432/flower',
+      REDIS_URL: 'rediss://cache:6380',
       DATABASE_POOL_MAX: 25,
       OUTBOX_RELAY: 'off',
       LOG_LEVEL: 'debug',
@@ -58,9 +63,9 @@ describe('parseEnv', () => {
     });
   });
 
-  it('requires DATABASE_URL in production', () => {
+  it('requires DATABASE_URL and REDIS_URL in production', () => {
     expect(() => parseEnv({ NODE_ENV: 'production' })).toThrow(
-      /DATABASE_URL: is required in production/,
+      /DATABASE_URL: is required in production[\s\S]*REDIS_URL: is required in production/,
     );
   });
 

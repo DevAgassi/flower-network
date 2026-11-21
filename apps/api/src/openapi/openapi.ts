@@ -29,6 +29,13 @@ export function buildOpenApiDocument(app: INestApplication): OpenAPIObject {
       'HTTP API of the Flower Network platform. Generated from the NestJS controllers; do not edit openapi.json by hand.',
     )
     .setVersion('0.1.0')
+    .addBearerAuth({
+      type: 'http',
+      scheme: 'bearer',
+      // Opaque session token, not a JWT (identity docs).
+      bearerFormat: 'opaque',
+      description: 'Session token from POST /auth/login',
+    })
     .build();
   return SwaggerModule.createDocument(app, config, {
     operationIdFactory: operationId,

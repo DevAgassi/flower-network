@@ -4,6 +4,7 @@ import { z } from 'zod';
 import request from 'supertest';
 import { App } from 'supertest/types.js';
 import { AppModule } from './../src/app.module.js';
+import { Public } from './../src/identity/auth.decorators.js';
 import { setupApiDocs } from './../src/openapi/openapi.js';
 
 const createThingSchema = z.object({
@@ -12,6 +13,7 @@ const createThingSchema = z.object({
 });
 
 /** Test-only endpoint: shows how every zod-described body is validated. */
+@Public()
 @Controller('test-things')
 class ThingsController {
   @Post()
@@ -46,7 +48,7 @@ describe('Health (e2e)', () => {
     expect(response.body).toMatchObject({
       status: 'ok',
       service: 'api',
-      checks: { database: 'up', outbox: 'up' },
+      checks: { database: 'up', outbox: 'up', redis: 'up' },
     });
   });
 

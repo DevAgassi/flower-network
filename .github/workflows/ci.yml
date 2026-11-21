@@ -58,6 +58,7 @@ jobs:
           gh extension install DevAgassi/gh-roadmap
           gh roadmap sync --dry-run
 
+  # Named `database` for the branch rule; also runs Redis.
   database:
     name: database
     runs-on: ubuntu-latest
@@ -76,8 +77,18 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
+      redis:
+        image: redis:8.8-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     env:
       DATABASE_URL: postgres://flower:flower@localhost:5432/flower
+      REDIS_URL: redis://localhost:6379
     steps:
       - uses: actions/checkout@v7
 

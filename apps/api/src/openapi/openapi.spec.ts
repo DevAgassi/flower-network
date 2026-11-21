@@ -47,6 +47,19 @@ describe('OpenAPI document', () => {
     });
   });
 
+  it('requires a bearer session on every operation except the public ones', () => {
+    // Public routes (@Public()) must be listed here; anything else without a
+    // security requirement means @ApiBearerAuth() was forgotten.
+    const publicOperations = ['GET /health', 'POST /auth/login'];
+    const unsecured = Object.entries(document.paths).flatMap(([path, item]) =>
+      Object.entries(item)
+        .filter(([, op]) => !(op as { security?: unknown[] }).security?.length)
+        .map(([method]) => `${method.toUpperCase()} ${path}`),
+    );
+
+    expect(unsecured.sort()).toEqual(publicOperations.sort());
+  });
+
   it('leaves /metrics out of the contract', () => {
     expect(document.paths['/metrics']).toBeUndefined();
   });

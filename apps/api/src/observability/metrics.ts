@@ -24,6 +24,7 @@ import {
 import type { NextFunction, Request, Response } from 'express';
 import type { Subscription } from 'rxjs';
 import { AppConfigService } from '../config/app-config.module.js';
+import { Public } from '../identity/auth.decorators.js';
 
 /** One registry per process; every metric of the app registers here. */
 export function createRegistry(): Registry {
@@ -217,6 +218,7 @@ export class OutboxMetrics implements OnModuleInit, OnModuleDestroy {
 }
 
 /** GET /metrics on the API, in the Prometheus text format. Not part of the API contract. */
+@Public()
 @ApiExcludeController()
 @Controller('metrics')
 export class MetricsController {
