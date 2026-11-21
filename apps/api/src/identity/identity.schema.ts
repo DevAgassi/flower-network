@@ -12,6 +12,8 @@ import {
   varchar,
 } from 'drizzle-orm/pg-core';
 import { v7 as uuidv7 } from 'uuid';
+// Imported only for the foreign key of staff_locations (database doc).
+import { locations } from '../locations/locations.schema.js';
 
 export const userStatus = pgEnum('user_status', ['active', 'disabled']);
 
@@ -56,8 +58,7 @@ export const users = pgTable(
 
 /**
  * Locations a florist or courier works at. Owner and admin work everywhere
- * and have no rows here. `location_id` gets its foreign key to `locations`
- * in LOC-01, when that table exists.
+ * and have no rows here.
  */
 export const staffLocations = pgTable(
   'staff_locations',
@@ -65,7 +66,9 @@ export const staffLocations = pgTable(
     userId: uuid('user_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
-    locationId: uuid('location_id').notNull(),
+    locationId: uuid('location_id')
+      .notNull()
+      .references(() => locations.id),
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()
       .defaultNow(),

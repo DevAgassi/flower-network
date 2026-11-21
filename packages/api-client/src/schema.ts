@@ -134,6 +134,48 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/locations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Stores and warehouses, stores first */
+        get: operations["Locations_list"];
+        put?: never;
+        /**
+         * Create a store or a warehouse
+         * @description A store needs latitude and longitude.
+         */
+        post: operations["Locations_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/locations/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One location with its opening hours */
+        get: operations["Locations_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Change a location, archive it, or replace its weekly hours
+         * @description Locations are never deleted: set `status: archived`.
+         */
+        patch: operations["Locations_update"];
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -199,7 +241,7 @@ export interface components {
          */
         StaffRole: "owner" | "admin" | "florist" | "courier";
         /** @enum {string} */
-        Permission: "staff:read" | "staff:manage";
+        Permission: "staff:read" | "staff:manage" | "locations:manage";
         ApiError: {
             /** @example 401 */
             statusCode: number;
@@ -253,6 +295,66 @@ export interface components {
         PasswordResetResponse: {
             /** @description New generated password, shown only in this response; all sessions of the user ended */
             password: string;
+        };
+        Location: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            kind: components["schemas"]["LocationKind"];
+            status: components["schemas"]["LocationStatus"];
+            address: string;
+            latitude: number | null;
+            longitude: number | null;
+            phone: string | null;
+            hours: components["schemas"]["OpeningHours"][];
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        /**
+         * @description `store` sells and hands out pickups; `warehouse` stores stock
+         * @enum {string}
+         */
+        LocationKind: "store" | "warehouse";
+        /**
+         * @description Archived locations are kept for history and hidden from pickers
+         * @enum {string}
+         */
+        LocationStatus: "active" | "archived";
+        OpeningHours: {
+            /** @description ISO weekday: 1 = Monday … 7 = Sunday */
+            weekday: number;
+            /** @example 09:00 */
+            opens: string;
+            /** @example 20:00 */
+            closes: string;
+        };
+        CreateLocationRequest: {
+            name: string;
+            kind: components["schemas"]["LocationKind"];
+            address: string;
+            latitude?: number;
+            longitude?: number;
+            /** @example +380 44 123 45 67 */
+            phone?: string;
+            /**
+             * @description Weekly schedule in Europe/Kyiv local time. A missing weekday is a day off; 00:00–24:00 is around the clock
+             * @default []
+             */
+            hours: components["schemas"]["OpeningHours"][];
+        };
+        UpdateLocationRequest: {
+            name?: string;
+            kind?: components["schemas"]["LocationKind"];
+            status?: components["schemas"]["LocationStatus"];
+            address?: string;
+            latitude?: number | null;
+            longitude?: number | null;
+            /** @example +380 44 123 45 67 */
+            phone?: string | null;
+            /** @description Replaces the whole week */
+            hours?: components["schemas"]["OpeningHours"][];
         };
     };
     responses: never;
@@ -653,6 +755,213 @@ export interface operations {
                 };
             };
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    Locations_list: {
+        parameters: {
+            query?: {
+                /** @description Also return archived locations (default false) */
+                includeArchived?: "true" | "false";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Location"][];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    Locations_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateLocationRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Location"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Requires the `locations:manage` permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Name already taken */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    Locations_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Location"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    Locations_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateLocationRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Location"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Requires the `locations:manage` permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Name already taken */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

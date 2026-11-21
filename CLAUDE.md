@@ -48,10 +48,11 @@ apps/api/src/
   outbox/                 AppOutboxModule (@nestjs/outbox, schema nest_outbox), inbox retention
   redis/                  RedisModule: REDIS token (ioredis)
   identity/               staff users, login, Redis sessions, roles/permissions, /staff, global AuthGuard
+  locations/              stores and warehouses, opening hours; LocationsService for other modules
   observability/          OpenTelemetry tracing, pino logging, Prometheus metrics (GET /metrics)
   openapi/                OpenAPI builder, /docs (dev only), generator
   health/                 GET /health (database, outbox)
-  <module>/               business modules, from Stage 2
+  <module>/               business modules (one folder each)
 apps/api/test/            e2e tests
 apps/api/drizzle/         SQL migrations (generated)
 apps/api/openapi.json     API contract (generated)
