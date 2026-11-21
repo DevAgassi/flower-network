@@ -9,10 +9,9 @@ import { AppModule } from '../src/app.module.js';
 import { DATABASE, type Database } from '../src/database/database.module.js';
 import { type StaffRole, users } from '../src/identity/identity.schema.js';
 import { SessionStore } from '../src/identity/session.store.js';
+import { locations } from '../src/locations/locations.schema.js';
+import { LocationsService } from '../src/locations/locations.service.js';
 import { UsersService } from '../src/identity/users.service.js';
-
-const SHOP_A = '0193a1b2-0000-7000-8000-00000000000a';
-const SHOP_B = '0193a1b2-0000-7000-8000-00000000000b';
 
 describe('Roles, permissions and staff management (e2e)', () => {
   let app: INestApplication<App>;
@@ -20,6 +19,9 @@ describe('Roles, permissions and staff management (e2e)', () => {
   let usersService: UsersService;
   let sessions: SessionStore;
   const createdIds: string[] = [];
+  let SHOP_A: string;
+  let SHOP_B: string;
+  let ARCHIVED: string;
 
   /** A user with a live session; no login, so no limiter or scrypt per call. */
   async function staff(
@@ -65,12 +67,30 @@ describe('Roles, permissions and staff management (e2e)', () => {
     db = app.get(DATABASE);
     usersService = app.get(UsersService);
     sessions = app.get(SessionStore);
+
+    const directory = app.get(LocationsService);
+    const shop = (suffix: string) =>
+      directory.create({
+        name: `E2E staff ${suffix} ${randomUUID()}`,
+        kind: 'store',
+        address: 'Test street 1',
+        latitude: 50.45,
+        longitude: 30.52,
+        hours: [],
+      });
+    [SHOP_A, SHOP_B, ARCHIVED] = (
+      await Promise.all([shop('A'), shop('B'), shop('archived')])
+    ).map((l) => l.id);
+    await directory.update(ARCHIVED, { status: 'archived' });
   });
 
   afterAll(async () => {
     for (const id of createdIds) await sessions.revokeAll(id);
     if (createdIds.length)
       await db.delete(users).where(inArray(users.id, createdIds));
+    await db
+      .delete(locations)
+      .where(inArray(locations.id, [SHOP_A, SHOP_B, ARCHIVED]));
     await app.close();
   });
 
@@ -107,7 +127,7 @@ describe('Roles, permissions and staff management (e2e)', () => {
       .expect(({ body }) =>
         expect(body).toMatchObject({
           role: 'admin',
-          permissions: ['staff:read', 'staff:manage'],
+          permissions: ['staff:read', 'staff:manage', 'locations:manage'],
           locations: 'all',
         }),
       );
@@ -118,7 +138,7 @@ describe('Roles, permissions and staff management (e2e)', () => {
         expect(body).toMatchObject({
           role: 'courier',
           permissions: [],
-          locations: [SHOP_A, SHOP_B],
+          locations: [SHOP_A, SHOP_B].sort(),
         }),
       );
   });
@@ -223,6 +243,20 @@ describe('Roles, permissions and staff management (e2e)', () => {
         password: (body as { password: string }).password,
       })
       .expect(201);
+  });
+
+  it('binds staff only to existing, active locations', async () => {
+    const admin = await staff('admin');
+    const florist = await staff('florist');
+
+    for (const locationIds of [[randomUUID()], [ARCHIVED]]) {
+      await as(admin.token)
+        .patch(`/staff/${florist.id}`, { locationIds })
+        .expect(400);
+    }
+    await expect(
+      usersService.update(florist.id, { locationIds: [randomUUID()] }),
+    ).rejects.toMatchObject({ cause: { code: '23503' } });
   });
 
   it('validates ids and bodies', async () => {

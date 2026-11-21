@@ -7,14 +7,18 @@ export const STAFF_ROLES = staffRole.enumValues;
  * here when it is built, together with the matrix rows below; routes require
  * permissions, never roles (`@RequirePermission()`).
  */
-export const PERMISSIONS = ['staff:read', 'staff:manage'] as const;
+export const PERMISSIONS = [
+  'staff:read',
+  'staff:manage',
+  'locations:manage',
+] as const;
 
 export type Permission = (typeof PERMISSIONS)[number];
 
 /** Who can do what. The owner can do everything. */
 const ROLE_PERMISSIONS: Record<StaffRole, readonly Permission[]> = {
   owner: PERMISSIONS,
-  admin: ['staff:read', 'staff:manage'],
+  admin: ['staff:read', 'staff:manage', 'locations:manage'],
   florist: [],
   courier: [],
 };

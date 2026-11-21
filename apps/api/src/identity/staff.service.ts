@@ -6,6 +6,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { LocationsService } from '../locations/locations.service.js';
 import type { AuthenticatedUser } from './authenticated-user.js';
 import type { StaffRole } from './identity.schema.js';
 import { generatePassword } from './password.js';
@@ -25,7 +26,10 @@ import {
 export class StaffService {
   private readonly logger = new Logger(StaffService.name);
 
-  constructor(private readonly users: UsersService) {}
+  constructor(
+    private readonly users: UsersService,
+    private readonly locations: LocationsService,
+  ) {}
 
   list(): Promise<StaffMember[]> {
     return this.users.listMembers();
@@ -48,6 +52,7 @@ export class StaffService {
   ): Promise<{ member: StaffMember; password: string }> {
     assertCanManage(actor, input.role);
     assertLocationsFit(input.role, input.locationIds);
+    await this.locations.assertActive(input.locationIds);
     if (await this.users.findByEmail(input.email)) {
       throw new ConflictException('A user with this email already exists');
     }
@@ -75,6 +80,7 @@ export class StaffService {
     if (changes.role) assertCanManage(actor, changes.role);
     if (changes.locationIds) {
       assertLocationsFit(changes.role ?? target.role, changes.locationIds);
+      await this.locations.assertActive(changes.locationIds);
     }
 
     const updated = await this.users.update(id, changes);

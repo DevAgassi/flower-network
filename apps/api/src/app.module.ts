@@ -5,6 +5,7 @@ import { AppConfigModule } from './config/app-config.module.js';
 import { DatabaseModule } from './database/database.module.js';
 import { HealthModule } from './health/health.module.js';
 import { IdentityModule } from './identity/identity.module.js';
+import { LocationsModule } from './locations/locations.module.js';
 import { ObservabilityModule } from './observability/observability.module.js';
 import { AppOutboxModule } from './outbox/outbox.module.js';
 import { RedisModule } from './redis/redis.module.js';
@@ -19,6 +20,7 @@ import { RedisModule } from './redis/redis.module.js';
     AppOutboxModule.register(),
     HealthModule,
     IdentityModule,
+    LocationsModule,
   ],
   providers: [
     // Validates every parameter declared with a zod schema, e.g.
