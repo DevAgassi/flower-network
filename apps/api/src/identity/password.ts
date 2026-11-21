@@ -57,6 +57,11 @@ export async function verifyPassword(
   return actual.length === expected.length && timingSafeEqual(actual, expected);
 }
 
+/** A random password for a new user or a reset: 16 URL-safe characters. */
+export function generatePassword(): string {
+  return randomBytes(12).toString('base64url');
+}
+
 let dummyHash: Promise<string> | undefined;
 
 /**

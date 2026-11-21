@@ -62,10 +62,72 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** The signed-in staff user */
+        /** The signed-in staff user, their role, permissions and locations */
         get: operations["Auth_me"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/staff": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** All staff members */
+        get: operations["Staff_list"];
+        put?: never;
+        /**
+         * Create a staff member with a generated password
+         * @description An admin may create only florists and couriers. The password is returned once.
+         */
+        post: operations["Staff_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/staff/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One staff member */
+        get: operations["Staff_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Change name, role, status or locations
+         * @description Nobody changes their own role or status; an admin manages only florists and couriers. Disabling ends all sessions.
+         */
+        patch: operations["Staff_update"];
+        trace?: never;
+    };
+    "/staff/{id}/password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reset a staff member's password
+         * @description Generates a new password and ends all sessions of the user.
+         */
+        post: operations["Staff_resetPassword"];
         delete?: never;
         options?: never;
         head?: never;
@@ -118,13 +180,26 @@ export interface components {
             expiresAt: string;
             user: components["schemas"]["StaffUser"];
         };
+        /** @description The signed-in staff user */
         StaffUser: {
             /** Format: uuid */
             id: string;
             /** Format: email */
             email: string;
             name: string;
+            role: components["schemas"]["StaffRole"];
+            /** @description What the role allows; build navigation from it */
+            permissions: components["schemas"]["Permission"][];
+            /** @description `all` for owner and admin; a florist's or courier's location ids */
+            locations: "all" | string[];
         };
+        /**
+         * @description What a staff member does
+         * @enum {string}
+         */
+        StaffRole: "owner" | "admin" | "florist" | "courier";
+        /** @enum {string} */
+        Permission: "staff:read" | "staff:manage";
         ApiError: {
             /** @example 401 */
             statusCode: number;
@@ -132,6 +207,52 @@ export interface components {
             message: string | string[];
             /** @example Unauthorized */
             error?: string;
+        };
+        StaffMember: {
+            /** Format: uuid */
+            id: string;
+            /** Format: email */
+            email: string;
+            name: string;
+            role: components["schemas"]["StaffRole"];
+            status: components["schemas"]["StaffStatus"];
+            locationIds: string[];
+            /** Format: date-time */
+            lastLoginAt: string | null;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        /**
+         * @description A disabled user cannot sign in
+         * @enum {string}
+         */
+        StaffStatus: "active" | "disabled";
+        CreateStaffRequest: {
+            /** Format: email */
+            email: string;
+            name: string;
+            role: components["schemas"]["StaffRole"];
+            /**
+             * @description Locations a florist or courier works at; must be empty for owner and admin
+             * @default []
+             */
+            locationIds: string[];
+        };
+        CreateStaffResponse: {
+            member: components["schemas"]["StaffMember"];
+            /** @description Generated password, shown only in this response */
+            password: string;
+        };
+        UpdateStaffRequest: {
+            name?: string;
+            role?: components["schemas"]["StaffRole"];
+            status?: components["schemas"]["StaffStatus"];
+            /** @description Locations a florist or courier works at; must be empty for owner and admin */
+            locationIds?: string[];
+        };
+        PasswordResetResponse: {
+            /** @description New generated password, shown only in this response; all sessions of the user ended */
+            password: string;
         };
     };
     responses: never;
@@ -264,6 +385,274 @@ export interface operations {
                 };
             };
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    Staff_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffMember"][];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Requires the `staff:read` permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    Staff_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateStaffRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreateStaffResponse"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Requires the `staff:manage` permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Email already taken */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    Staff_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffMember"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Requires the `staff:read` permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    Staff_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateStaffRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffMember"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Requires the `staff:manage` permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Would leave the network without an active owner */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    Staff_resetPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PasswordResetResponse"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Requires the `staff:manage` permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

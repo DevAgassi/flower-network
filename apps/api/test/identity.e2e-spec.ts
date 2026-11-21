@@ -32,6 +32,7 @@ describe('Staff authentication (e2e)', () => {
       email,
       name: 'E2E Florist',
       password: PASSWORD,
+      role: 'florist',
     });
     createdIds.push(user.id);
     return { id: user.id, email };
@@ -80,12 +81,15 @@ describe('Staff authentication (e2e)', () => {
     const { token, expiresAt, user } = loginResponse.body as {
       token: string;
       expiresAt: string;
-      user: { id: string; email: string; name: string };
+      user: Record<string, unknown>;
     };
     expect(user).toEqual({
       id,
       email: email.toLowerCase(),
       name: 'E2E Florist',
+      role: 'florist',
+      permissions: [],
+      locations: [],
     });
     expect(Date.parse(expiresAt)).toBeGreaterThan(Date.now());
 

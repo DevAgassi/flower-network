@@ -1,4 +1,3 @@
-import { randomBytes } from 'node:crypto';
 import { parseArgs } from 'node:util';
 import { Module } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
@@ -6,7 +5,9 @@ import { runOrExit } from '../bootstrap.js';
 import { AppConfigModule } from '../config/app-config.module.js';
 import { DatabaseModule } from '../database/database.module.js';
 import { RedisModule } from '../redis/redis.module.js';
-import { loginRequestSchema } from './identity.contract.js';
+import { loginRequestSchema, staffRoleSchema } from './identity.contract.js';
+import { generatePassword } from './password.js';
+import { STAFF_ROLES } from './permissions.js';
 import { SessionStore } from './session.store.js';
 import { UsersService } from './users.service.js';
 
@@ -17,19 +18,25 @@ import { UsersService } from './users.service.js';
 })
 class CreateUserModule {}
 
-const USAGE =
-  'Usage: pnpm --filter @flower/api user:create --email <email> --name "<name>"';
+const USAGE = `Usage: pnpm --filter @flower/api user:create --email <email> --name "<name>" --role <${STAFF_ROLES.join('|')}>`;
 
 /**
  * Creates a staff user and prints a generated password once
- * (`pnpm --filter @flower/api user:create`). Until the admin screens exist
- * (ADM-01) this is how the first users are made.
+ * (`pnpm --filter @flower/api user:create`). Used for the first owner; after
+ * that the owner manages staff through `/staff` (screens in ADM-01).
+ * Florists and couriers made here have no locations yet.
  */
 await runOrExit(async () => {
   const { values } = parseArgs({
-    options: { email: { type: 'string' }, name: { type: 'string' } },
+    options: {
+      email: { type: 'string' },
+      name: { type: 'string' },
+      role: { type: 'string' },
+    },
   });
-  if (!values.email || !values.name) throw new Error(USAGE);
+  if (!values.email || !values.name || !values.role) throw new Error(USAGE);
+  const role = staffRoleSchema.safeParse(values.role);
+  if (!role.success) throw new Error(`Unknown role: ${values.role}\n${USAGE}`);
   const email = loginRequestSchema.shape.email.safeParse(values.email);
   if (!email.success) throw new Error(`Not a valid email: ${values.email}`);
 
@@ -42,14 +49,15 @@ await runOrExit(async () => {
     if (await users.findByEmail(email.data)) {
       throw new Error(`A user with email ${email.data} already exists`);
     }
-    const password = randomBytes(12).toString('base64url');
+    const password = generatePassword();
     const user = await users.create({
       email: email.data,
       name: values.name,
       password,
+      role: role.data,
     });
     console.log(
-      `Created ${user.email} (${user.id}).\nPassword (shown once): ${password}`,
+      `Created ${user.role} ${user.email} (${user.id}).\nPassword (shown once): ${password}`,
     );
   } finally {
     await app.close();

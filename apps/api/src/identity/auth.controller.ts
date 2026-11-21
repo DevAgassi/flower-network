@@ -63,7 +63,11 @@ export class AuthController {
       body.password,
       request.ip ?? 'unknown',
     );
-    return { ...result, expiresAt: result.expiresAt.toISOString() };
+    return {
+      token: result.token,
+      expiresAt: result.expiresAt.toISOString(),
+      user: toStaffUser(result.user),
+    };
   }
 
   @Post('logout')
@@ -81,13 +85,26 @@ export class AuthController {
 
   @Get('me')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'The signed-in staff user' })
+  @ApiOperation({
+    summary: 'The signed-in staff user, their role, permissions and locations',
+  })
   @ApiResponse({ status: HttpStatus.OK, standardSchema: staffUserSchema })
   @ApiResponse({
     status: HttpStatus.UNAUTHORIZED,
     standardSchema: apiErrorSchema,
   })
   me(@CurrentUser() user: AuthenticatedUser): StaffUser {
-    return user;
+    return toStaffUser(user);
   }
+}
+
+function toStaffUser(user: AuthenticatedUser): StaffUser {
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    role: user.role,
+    permissions: [...user.permissions],
+    locations: user.locations === 'all' ? 'all' : [...user.locations],
+  };
 }

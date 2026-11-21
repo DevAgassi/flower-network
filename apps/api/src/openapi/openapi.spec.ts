@@ -60,6 +60,30 @@ describe('OpenAPI document', () => {
     expect(unsecured.sort()).toEqual(publicOperations.sort());
   });
 
+  it('documents 403 on every operation that requires a permission', () => {
+    const operations = Object.entries(document.paths).flatMap(([path, item]) =>
+      Object.entries(item).map(([method, op]) => ({
+        name: `${method.toUpperCase()} ${path}`,
+        op: op as {
+          'x-required-permission'?: string;
+          responses: Record<string, unknown>;
+        },
+      })),
+    );
+    const guarded = operations.filter((o) => o.op['x-required-permission']);
+
+    expect(guarded.map((o) => o.name)).toContain('GET /staff');
+    for (const { op } of guarded) {
+      expect(op.responses['403']).toMatchObject({
+        content: {
+          'application/json': {
+            schema: { $ref: '#/components/schemas/ApiError' },
+          },
+        },
+      });
+    }
+  });
+
   it('leaves /metrics out of the contract', () => {
     expect(document.paths['/metrics']).toBeUndefined();
   });
