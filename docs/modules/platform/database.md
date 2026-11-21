@@ -39,7 +39,7 @@ await this.db.transaction(async (tx: Transaction) => {
 - **Time:** `timestamp(…, { withTimezone: true })`; `created_at` with `defaultNow()`, `updated_at` with `defaultNow()` and `$onUpdate(() => new Date())`.
 - **Integration metadata:** `public_metadata` / `private_metadata` `jsonb not null default '{}'` on key tables (init.md §4.1).
 - **Fixed value sets:** `pgEnum` (adding a value is a new migration with `ALTER TYPE … ADD VALUE`).
-- **References between modules:** a `*.schema.ts` may import another module's table **only to declare a foreign key** — integrity stays with the database (init.md §4.1). Services still never query another module's tables. When the referenced table does not exist yet, the column is created without the key and the module that creates the table adds it (first case: `staff_locations.location_id` → `locations`, LOC-01).
+- **References between modules:** a `*.schema.ts` may import another module's table **only to declare a foreign key** — integrity stays with the database (init.md §4.1). Services still never query another module's tables. When the referenced table does not exist yet, the column is created without the key and the module that creates the table adds it (first case: `staff_locations.location_id` → `locations`, added in LOC-01).
 - **Invariants the database can check** (lowercase email, non-negative stock) get a `check()` constraint, not only application code.
 
 ## Migration workflow

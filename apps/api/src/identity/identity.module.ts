@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { LocationsModule } from '../locations/locations.module.js';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthController } from './auth.controller.js';
 import { AuthGuard } from './auth.guard.js';
@@ -16,6 +17,7 @@ import { UsersService } from './users.service.js';
  * when marked `@RequirePermission()`.
  */
 @Module({
+  imports: [LocationsModule],
   controllers: [AuthController, StaffController],
   providers: [
     UsersService,

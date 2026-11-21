@@ -3,6 +3,7 @@ import {
   ConflictException,
   ForbiddenException,
 } from '@nestjs/common';
+import type { LocationsService } from '../locations/locations.service.js';
 import type { AuthenticatedUser } from './authenticated-user.js';
 import type { StaffRole } from './identity.schema.js';
 import { StaffService } from './staff.service.js';
@@ -33,7 +34,11 @@ describe('StaffService rules', () => {
     update: vi.fn(),
     setPassword: vi.fn(),
   };
-  const service = new StaffService(users as unknown as UsersService);
+  const locations = { assertActive: vi.fn() };
+  const service = new StaffService(
+    users as unknown as UsersService,
+    locations as unknown as LocationsService,
+  );
 
   beforeEach(() => {
     vi.resetAllMocks();
@@ -55,6 +60,22 @@ describe('StaffService rules', () => {
     expect(users.create).toHaveBeenCalledWith(
       expect.objectContaining({ role: 'florist', locationIds: [SHOP] }),
     );
+  });
+
+  it('rejects unknown or archived locations', async () => {
+    locations.assertActive.mockRejectedValue(
+      new BadRequestException('Unknown or archived locations: x'),
+    );
+
+    await expect(
+      service.create(actor('admin'), {
+        email: 'new@example.com',
+        name: 'New Florist',
+        role: 'florist',
+        locationIds: [SHOP],
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(users.create).not.toHaveBeenCalled();
   });
 
   it('forbids an admin to create an admin or an owner', async () => {

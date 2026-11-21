@@ -24,10 +24,11 @@ Stored as `users.role` (`staff_role` enum). Customers are not staff and have no 
 
 Defined in one place, [`permissions.ts`](../../../apps/api/src/identity/permissions.ts):
 
-| Permission     | owner | admin                          | florist | courier |
-| -------------- | ----- | ------------------------------ | ------- | ------- |
-| `staff:read`   | ✓     | ✓                              | –       | –       |
-| `staff:manage` | ✓     | ✓ (florists and couriers only) | –       | –       |
+| Permission         | owner | admin                          | florist | courier |
+| ------------------ | ----- | ------------------------------ | ------- | ------- |
+| `staff:read`       | ✓     | ✓                              | –       | –       |
+| `staff:manage`     | ✓     | ✓ (florists and couriers only) | –       | –       |
+| `locations:manage` | ✓     | ✓                              | –       | –       |
 
 The owner always has every permission.
 
@@ -64,7 +65,7 @@ if (user.locations !== 'all')
   query.where(inArray(t.locationId, [...user.locations]));
 ```
 
-A florist with no locations yet sees nothing location-bound. `staff_locations.location_id` has no foreign key until the `locations` table exists; LOC-01 adds it and validates ids in the staff API ([#33](https://github.com/DevAgassi/flower-network/issues/33)).
+A florist with no locations yet sees nothing location-bound. `staff_locations.location_id` references [`locations`](../locations/locations.md) with a foreign key.
 
 ## Staff API
 
@@ -83,6 +84,6 @@ Passwords are generated (16 URL-safe characters) and returned once; nobody choos
 
 - An admin creates, changes, disables and resets passwords only of florists and couriers; the owner manages everyone.
 - Nobody changes their own role or status, or resets their own password through `/staff`.
-- `locationIds` are only for florists and couriers (`400` otherwise); a user moved to owner or admin loses their bindings.
+- `locationIds` are only for florists and couriers (`400` otherwise) and must be existing, active locations (`400` for unknown or archived ones, checked by `LocationsService.assertActive`); a user moved to owner or admin loses their bindings.
 - There is always at least one active owner. All active owners are locked in id order before the change, so two owners demoting each other at the same time end with one owner and a `409` for the second request.
 - Changes are logged with user ids only (who changed whom, which fields).
