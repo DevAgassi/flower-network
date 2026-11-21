@@ -7,7 +7,7 @@ audience: [developer]
 
 # Web (`apps/web`)
 
-TanStack Start 1 on Vite with Nitro 3 as the server: the storefront, the admin panel (`/admin`) and the florist POS (`/pos`) in one app. Tailwind CSS 4, shadcn/ui components, TanStack Query, Router and Table.
+TanStack Start 1 on Vite with Nitro 3 as the server: the storefront. The admin panel and the florist POS (`/pos`) are a separate app, `apps/admin`, from ADM-01 ([ADR-14](../../init.md)), so the storefront and the admin deploy and fail independently. Tailwind CSS 4, shadcn/ui components, TanStack Query, Router and Table.
 
 ## Source layout
 

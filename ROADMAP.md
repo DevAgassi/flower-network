@@ -45,9 +45,9 @@ Dashed arrow — asynchronous event through the Transactional Outbox.
 ```mermaid
 flowchart LR
   subgraph UI["Frontend (TanStack Start)"]
-    STF[Storefront]
-    ADM[Admin /admin]
-    POSUI[POS /pos]
+    STF[Storefront apps/web]
+    ADM[Admin apps/admin]
+    POSUI[POS apps/admin /pos]
   end
 
   subgraph Core["Backend modules (NestJS)"]
@@ -222,12 +222,12 @@ The `Issue` column is filled in once the issue is created.
 | INV-04 | E_INV_S2 | Stock transfers: `draft → shipped → received → closed`, in-transit, losses | INV-01 | todo | [#45](https://github.com/DevAgassi/flower-network/issues/45) |
 | INV-05 | E_INV_S2 | Inventory counts and `count_adjustment` | INV-01 | todo | [#46](https://github.com/DevAgassi/flower-network/issues/46) |
 | INV-06 | E_INV_S2 | Bouquet assembly (`assembly_consume` / `assembly_produce`) | INV-02, CAT-06 | todo | [#47](https://github.com/DevAgassi/flower-network/issues/47) |
-| ADM-01 | E_ADM_S2 | Admin shell: layout, login, role-based navigation | IAM-02, PLT-15 | todo | [#48](https://github.com/DevAgassi/flower-network/issues/48) |
+| ADM-01 | E_ADM_S2 | Admin app `apps/admin` (ADR-14): separate TanStack Start process, login with the session in an httpOnly cookie, layout, role-based navigation | IAM-02, PLT-15 | todo | [#48](https://github.com/DevAgassi/flower-network/issues/48) |
 | ADM-02 | E_ADM_S2 | Catalog management screens | ADM-01, CAT-01…CAT-06 | todo | [#49](https://github.com/DevAgassi/flower-network/issues/49) |
 | ADM-03 | E_ADM_S2 | Inventory & procurement screens (receipts, transfers, counts, write-offs) | ADM-01, INV-01…INV-06, PRC-02 | todo | [#50](https://github.com/DevAgassi/flower-network/issues/50) |
 | ADM-04 | E_ADM_S2 | Documentation section: `docs/` rendered in the admin, filtered by role on the server | ADM-01, PLT-12 | todo | [#95](https://github.com/DevAgassi/flower-network/issues/95) |
 | PLT-08 | E_PLT_S2 | Seed data generator (locations, catalog, stock at volume) | LOC-01, CAT-01, INV-01 | todo | [#30](https://github.com/DevAgassi/flower-network/issues/30) |
-| PLT-15 | E_PLT_S2 | Localization foundation: supported and default locales in config, locale resolution (user setting → cookie → `Accept-Language`), UI message catalogs in the web app (English is the default; Ukrainian as the second language, translated during development by the `translator` subagent to measure the cost; adopters add their own languages), money and dates through `Intl` | PLT-02 | todo | [#112](https://github.com/DevAgassi/flower-network/issues/112) |
+| PLT-15 | E_PLT_S2 | Localization foundation: supported and default locales in config, locale resolution (user setting → cookie → `Accept-Language`), UI message catalogs in the web apps (storefront and admin; English is the default; Ukrainian as the second language, translated during development by the `translator` subagent to measure the cost; adopters add their own languages), money and dates through `Intl` | PLT-02 | todo | [#112](https://github.com/DevAgassi/flower-network/issues/112) |
 
 ### Stage 3 · Storefront, Checkout, Payments, Delivery
 
